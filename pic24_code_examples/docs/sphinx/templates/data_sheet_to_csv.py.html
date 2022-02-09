@@ -1,0 +1,303 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>data_sheet_to_csv.py - GUI to assist in translating Microchip data sheets to pin mappings &#8212; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 6-May-2015 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/CodeChat.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '6-May-2015',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: ''
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="compect_csv.py - Group all processors with identical mappings together" href="compact_csv.py.html" />
+    <link rel="prev" title="convert_gld.py" href="../bootloader/pic24_dspic33_bootloader.X/lkr/convert_gld.py.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <script type="text/javascript">document.addEventListener("DOMContentLoaded", function(event) {let walk_tree = function(elements,func_walk,func_child) {let walk_children = [];for (let index = 0; index < elements.length; ++index) {let that = elements[index];while (that && !func_walk(that)) {that = that.parentElement;}if (that) {that = func_walk(that);walk_children.push(that);while (that && func_child(that)) {that = func_child(that);walk_children.push(that);}}}return walk_children;};let code = document.getElementsByClassName("fenced-code");walk_tree(code, x => x.nextElementSibling, x => x.firstElementChild).map(x => {x.style.marginTop = 0;x.style.paddingTop = 0;});walk_tree(code, x => x.previousElementSibling, x => x.lastElementChild).map(x => {x.style.marginBottom = 0;x.style.paddingBottom = 0;});});</script><div class="section" id="data-sheet-to-csv-py-gui-to-assist-in-translating-microchip-data-sheets-to-pin-mappings">
+<h1>data_sheet_to_csv.py - GUI to assist in translating Microchip data sheets to pin mappings<a class="headerlink" href="#data-sheet-to-csv-py-gui-to-assist-in-translating-microchip-data-sheets-to-pin-mappings" title="Permalink to this headline">¶</a></h1>
+<p>This program accepts text copied and pasted from a Microchip data sheet (in
+PDF format) of the pinout for a given package, then translates it into an
+Rxy/RPy/ANn/CNm mapping.</p>
+<p>To build as an executable:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">pyinstaller</span> <span class="n">data_sheet_to_csv</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">y</span>
+</pre></div>
+</div>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span> 
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">import</span> <span class="nn">os</span>
+ 
+</pre></div>
+</div>
+<p>The excellent <a class="reference external" href="http://pyqt.sourceforge.net/Docs/PyQt5/">PyQt5 library</a> provides the GUI for this package.</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">PyQt5</span> <span class="kn">import</span> <span class="n">QtWidgets</span><span class="p">,</span> <span class="n">QtGui</span><span class="p">,</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">uic</span>
+
+<span class="kn">from</span> <span class="nn">compact_csv</span> <span class="kn">import</span> <span class="n">enumeratePic24Ports</span>
+
+
+<span class="k">def</span> <span class="nf">text_pinout_to_mapping</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="n">pins</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+    <span class="n">RPy</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">ANn</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">CNm</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">last_failure</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">last_pin</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">for</span> <span class="n">pin</span> <span class="ow">in</span> <span class="n">pins</span><span class="p">:</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>Look for Rxy. If not found, we can’t do anything with this pin.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="n">mo</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">&#39;R([A-K]\d\d?)&#39;</span><span class="p">,</span> <span class="n">pin</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mo</span><span class="p">:</span>
+            <span class="n">Rxy</span> <span class="o">=</span> <span class="n">mo</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:6.0em;"><p>No Rxy pin here, so we can’t map. Do error checking anyway.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>            <span class="n">Rxy</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>Look for RPy.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="n">mo</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">&#39;RPI?(\d\d?\d?)&#39;</span><span class="p">,</span> <span class="n">pin</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mo</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">Rxy</span><span class="p">:</span>
+                <span class="n">last_failure</span> <span class="o">=</span> <span class="s1">&#39;Warning: found RPy without finding Rxy in &#39;</span> <span class="o">+</span> <span class="n">pin</span>
+                <span class="n">last_pin</span> <span class="o">=</span> <span class="n">pin</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">RPy</span><span class="p">[</span><span class="n">Rxy</span><span class="p">]</span> <span class="o">=</span> <span class="n">mo</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>Look for ANn.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="n">mo</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">&#39;AN(\d\d?)&#39;</span><span class="p">,</span> <span class="n">pin</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mo</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">Rxy</span><span class="p">:</span>
+                <span class="n">last_failure</span> <span class="o">=</span> <span class="s1">&#39;Warning: found ANn without finding Rxy in &#39;</span> <span class="o">+</span> <span class="n">pin</span>
+                <span class="n">last_pin</span> <span class="o">=</span> <span class="n">pin</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ANn</span><span class="p">[</span><span class="n">Rxy</span><span class="p">]</span> <span class="o">=</span> <span class="n">mo</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>Look for CNm.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="n">mo</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">&#39;CN(\d\d?)&#39;</span><span class="p">,</span> <span class="n">pin</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mo</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">Rxy</span><span class="p">:</span>
+                <span class="n">last_failure</span> <span class="o">=</span> <span class="s1">&#39;Warning: found CNm without finding Rxy in &#39;</span> <span class="o">+</span> <span class="n">pin</span>
+                <span class="n">last_pin</span> <span class="o">=</span> <span class="n">pin</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">CNm</span><span class="p">[</span><span class="n">Rxy</span><span class="p">]</span> <span class="o">=</span> <span class="n">mo</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">RPy</span><span class="p">,</span> <span class="n">ANn</span><span class="p">,</span> <span class="n">CNm</span><span class="p">,</span> <span class="n">last_failure</span><span class="p">,</span> <span class="n">last_pin</span>
+
+<span class="n">form_class</span><span class="p">,</span> <span class="n">base_class</span> <span class="o">=</span> <span class="n">uic</span><span class="o">.</span><span class="n">loadUiType</span><span class="p">(</span><span class="s1">&#39;data_sheet_to_csv.ui&#39;</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">main_dialog</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QMainWindow</span><span class="p">,</span> <span class="n">form_class</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>Let Qt and PyQt run their init first.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setupUi</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>Store portlist, which is used several times.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="bp">self</span><span class="o">.</span><span class="n">portlist</span> <span class="o">=</span> <span class="n">enumeratePic24Ports</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">portlist</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Device port / pin&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">parse_gui_text</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>Read the GUI text fields and parse out pin mapping and procesor name.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="n">pinout_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pinout_text_edit</span><span class="o">.</span><span class="n">toPlainText</span><span class="p">()</span>
+        <span class="n">RPy</span><span class="p">,</span> <span class="n">ANn</span><span class="p">,</span> <span class="n">CNm</span><span class="p">,</span> <span class="n">last_failure</span><span class="p">,</span> <span class="n">last_pin</span> <span class="o">=</span> <span class="n">text_pinout_to_mapping</span><span class="p">(</span><span class="n">pinout_text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">statusBar</span><span class="p">()</span><span class="o">.</span><span class="n">showMessage</span><span class="p">(</span><span class="n">last_failure</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">last_pin</span><span class="p">:</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:6.0em;"><p>Select failing text, assuming it was unique</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>            <span class="n">cursor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pinout_text_edit</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">pinout_text</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">last_pin</span><span class="p">)</span>
+            <span class="n">cursor</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="n">cursor</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">last_pin</span><span class="p">),</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">KeepAnchor</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pinout_text_edit</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">cursor</span><span class="p">)</span>
+        <span class="n">processor_names</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">processors_text_edit</span><span class="o">.</span><span class="n">toPlainText</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span> <span class="k">if</span> <span class="s1">&#39;PIC&#39;</span> <span class="ow">in</span> <span class="n">s</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">processor_names</span><span class="p">,</span> <span class="n">RPy</span><span class="p">,</span> <span class="n">ANn</span><span class="p">,</span> <span class="n">CNm</span>
+
+    <span class="k">def</span> <span class="nf">on_pinout_text_edit_textChanged</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_table</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">on_processors_text_edit_textChanged</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_table</span><span class="p">()</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>A helper to create an uneditable QTableWidgetItem</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>    <span class="k">def</span> <span class="nf">QTableWidgetItemUneditable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o</span><span class="p">):</span>
+        <span class="n">qtwi</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QTableWidgetItem</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+        <span class="n">qtwi</span><span class="o">.</span><span class="n">setFlags</span><span class="p">(</span><span class="n">qtwi</span><span class="o">.</span><span class="n">flags</span><span class="p">()</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">ItemIsEditable</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">qtwi</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>Display results for the user.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>    <span class="k">def</span> <span class="nf">update_table</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">processor_names</span><span class="p">,</span> <span class="n">RPy</span><span class="p">,</span> <span class="n">ANn</span><span class="p">,</span> <span class="n">CNm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_gui_text</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">results_label</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s1">&#39;Results: &#39;</span> <span class="o">+</span> <span class="n">processor_names</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">results_table_widget</span><span class="o">.</span><span class="n">clearContents</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">results_table_widget</span><span class="o">.</span><span class="n">setRowCount</span><span class="p">(</span><span class="mi">128</span><span class="p">)</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">Rxy</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">portlist</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">Rxy</span> <span class="ow">in</span> <span class="n">RPy</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">Rxy</span> <span class="ow">in</span> <span class="n">ANn</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">Rxy</span> <span class="ow">in</span> <span class="n">CNm</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">results_table_widget</span><span class="o">.</span><span class="n">setItem</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">QTableWidgetItemUneditable</span><span class="p">(</span><span class="n">RPy</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">Rxy</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)))</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">results_table_widget</span><span class="o">.</span><span class="n">setItem</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">QTableWidgetItemUneditable</span><span class="p">(</span><span class="n">ANn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">Rxy</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)))</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">results_table_widget</span><span class="o">.</span><span class="n">setItem</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">QTableWidgetItemUneditable</span><span class="p">(</span><span class="n">CNm</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">Rxy</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)))</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">results_table_widget</span><span class="o">.</span><span class="n">setVerticalHeaderItem</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QTableWidgetItem</span><span class="p">(</span><span class="n">Rxy</span><span class="p">))</span>
+
+                <span class="n">row</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">results_table_widget</span><span class="o">.</span><span class="n">setRowCount</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>This is called when OK is clicked. Append a CSV entry.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>    <span class="k">def</span> <span class="nf">on_buttonBox_accepted</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">processor_names</span><span class="p">,</span> <span class="n">RPy</span><span class="p">,</span> <span class="n">ANn</span><span class="p">,</span> <span class="n">CNm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_gui_text</span><span class="p">()</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>Prepare for appending to the CSV.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;pic24_devices.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;a+&#39;</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">outFile</span><span class="p">:</span>
+            <span class="n">csv_dict_writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictWriter</span><span class="p">(</span><span class="n">outFile</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">portlist</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:6.0em;"><p>Write the header only if the file is empty. (Leaving out the seek always reports 0 for the tell).</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>            <span class="n">outFile</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">SEEK_END</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">outFile</span><span class="o">.</span><span class="n">tell</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">csv_dict_writer</span><span class="o">.</span><span class="n">writeheader</span><span class="p">()</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:6.0em;"><p>Write it to the CSV.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>            <span class="n">RPy</span><span class="p">[</span><span class="s1">&#39;Device port / pin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">processor_names</span> <span class="o">+</span> <span class="s1">&#39; RPy&#39;</span>
+            <span class="n">ANn</span><span class="p">[</span><span class="s1">&#39;Device port / pin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">processor_names</span> <span class="o">+</span> <span class="s1">&#39; ANn&#39;</span>
+            <span class="n">CNm</span><span class="p">[</span><span class="s1">&#39;Device port / pin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">processor_names</span> <span class="o">+</span> <span class="s1">&#39; CNm&#39;</span>
+            <span class="n">csv_dict_writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="n">RPy</span><span class="p">)</span>
+            <span class="n">csv_dict_writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="n">ANn</span><span class="p">)</span>
+            <span class="n">csv_dict_writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="n">CNm</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>Display success, set up for next run.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="bp">self</span><span class="o">.</span><span class="n">statusBar</span><span class="p">()</span><span class="o">.</span><span class="n">showMessage</span><span class="p">(</span><span class="s1">&#39;CSV updated.&#39;</span><span class="p">,</span> <span class="mi">3000</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">processors_text_edit</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pinout_text_edit</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">results_label</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s1">&#39;Results&#39;</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<p>This routine runs the CodeChat GUI.</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>Instantiate the app and GUI.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>    <span class="n">app</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QApplication</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
+    <span class="n">window</span> <span class="o">=</span> <span class="n">main_dialog</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>Run the program.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>    <span class="n">window</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">exec_</span><span class="p">())</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../contents.html">Documentation overview</a><ul>
+  <li><a href="../utilities.html">Utilities</a><ul>
+      <li>Previous: <a href="../bootloader/pic24_dspic33_bootloader.X/lkr/convert_gld.py.html" title="previous chapter">convert_gld.py</a></li>
+      <li>Next: <a href="compact_csv.py.html" title="next chapter">compect_csv.py - Group all processors with identical mappings together</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/templates/data_sheet_to_csv.py"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="../_sources/templates/data_sheet_to_csv.py"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

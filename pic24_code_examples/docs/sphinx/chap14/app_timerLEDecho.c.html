@@ -1,0 +1,280 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>app_timerLEDecho.c - flash an LED using a software timer &#8212; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 6-May-2015 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/CodeChat.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '6-May-2015',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: ''
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="app_semaphore1.c - demonstrates use of semaphores for signaling synchronization" href="app_semaphore1.c.html" />
+    <link rel="prev" title="app_reverse.c - demonstrates a user task that reverses a string" href="app_reverse.c.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <script type="text/javascript">document.addEventListener("DOMContentLoaded", function(event) {let walk_tree = function(elements,func_walk,func_child) {let walk_children = [];for (let index = 0; index < elements.length; ++index) {let that = elements[index];while (that && !func_walk(that)) {that = that.parentElement;}if (that) {that = func_walk(that);walk_children.push(that);while (that && func_child(that)) {that = func_child(that);walk_children.push(that);}}}return walk_children;};let code = document.getElementsByClassName("fenced-code");walk_tree(code, x => x.nextElementSibling, x => x.firstElementChild).map(x => {x.style.marginTop = 0;x.style.paddingTop = 0;});walk_tree(code, x => x.previousElementSibling, x => x.lastElementChild).map(x => {x.style.marginBottom = 0;x.style.paddingBottom = 0;});});</script><div class="section" id="app-timerledecho-c-flash-an-led-using-a-software-timer">
+<h1>app_timerLEDecho.c - flash an LED using a software timer<a class="headerlink" href="#app-timerledecho-c-flash-an-led-using-a-software-timer" title="Permalink to this headline">¶</a></h1>
+<p>ESOS application program to recreate the “Echo” program ref echo.c
+in Chapter 8.  (See Figure 8.6 in the text.)
+“Echo” program which waits for UART1 RX character and echos it back +1.
+Use this program to test your UART connection under ESOS</p>
+<p>Application also has a flashing LED on RB15.  Flashing LED is generated
+by a <em>software timer</em> calling a user-provided callback function.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Demonstrates ESOS software timers</p>
+</div>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span> 
+ 
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>INCLUDEs go here  (First include the main esos.h file)</dt>
+<dd>After that, the user can include what they need</dd>
+</dl>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="cp">#include</span>    <span class="cpf">&quot;esos.h&quot;</span><span class="cp"></span>
+<span class="cp">#ifdef __linux</span>
+<span class="cp">#include</span>    <span class="cpf">&quot;esos_pc.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span>    <span class="cpf">&quot;esos_pc_stdio.h&quot;</span><span class="cp"></span>
+ 
+</pre></div>
+</div>
+<p>INCLUDE these so that printf() and our PC hacks work</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;sys/select.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;termios.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp"></span>
+<span class="cp">#else</span>
+<span class="cp">#include</span>    <span class="cpf">&quot;esos_pic24.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span>    <span class="cpf">&quot;esos_pic24_rs232.h&quot;</span><span class="cp"></span>
+<span class="cp">#endif</span>
+ 
+</pre></div>
+</div>
+<p>DEFINEs go here</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="cp">#ifndef __linux</span>
+<span class="cp">#define   CONFIG_LED1()   CONFIG_RB15_AS_DIG_OUTPUT()</span>
+<span class="cp">#define   LED1            _LATB15</span>
+<span class="cp">#else</span>
+<span class="cp">#define   CONFIG_LED1()   printf(&quot;called CONFIG_LED1()\n&quot;);</span>
+<span class="kt">uint8_t</span>     <span class="n">LED1</span> <span class="o">=</span> <span class="n">TRUE</span><span class="p">;</span>      <span class="c1">// LED1 is initially &quot;on&quot;</span>
+<span class="cp">#endif</span>
+ 
+</pre></div>
+</div>
+<p>PROTOTYPEs go here</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span> 
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>GLOBALs go here</dt>
+<dd>Generally, the user-created semaphores will be defined/allocated here</dd>
+</dl>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="k">const</span> <span class="kt">char</span> <span class="n">psz_CRNL</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">=</span> <span class="p">{</span><span class="mh">0x0D</span><span class="p">,</span> <span class="mh">0x0A</span><span class="p">,</span> <span class="mi">0</span><span class="p">};</span>
+
+<span class="cp">#ifdef __linux</span>
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>Simulate the timer ISR found on a MCU</dt>
+<dd>The PC doesn’t have a timer ISR, so this task will periodically
+call the timer services callback instead.
+USED ONLY FOR DEVELOPMENT AND TESTING ON PC.
+Real MCU hardware doesn’t need this task</dd>
+</dl>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="n">ESOS_USER_TASK</span><span class="p">(</span> <span class="n">__simulated_isr</span> <span class="p">)</span> <span class="p">{</span>
+  <span class="n">ESOS_TASK_BEGIN</span><span class="p">();</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">TRUE</span><span class="p">)</span> <span class="p">{</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>call the ESOS timer services callback just like a real H/W ISR would</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>    <span class="n">__esos_tmrSvcsExecute</span><span class="p">();</span>
+    <span class="n">ESOS_TASK_WAIT_TICKS</span><span class="p">(</span> <span class="mi">1</span> <span class="p">);</span>
+
+  <span class="p">}</span> <span class="c1">// endof while(TRUE)</span>
+  <span class="n">ESOS_TASK_END</span><span class="p">();</span>
+<span class="p">}</span> <span class="c1">// end child_task</span>
+<span class="cp">#endif</span>
+
+<span class="cm">/************************************************************************</span>
+<span class="cm"> * User supplied functions</span>
+<span class="cm"> ************************************************************************</span>
+<span class="cm"> */</span>
+ 
+</pre></div>
+</div>
+<p>An ESOS software timer callback function strobe the heartbeat LED.</p>
+<p>Toggles LED1 everytime the callback is called.  Exact period is
+determined by application when this timer callback function is
+registered with ESOS.  See ref esos_RegisterTimer
+Application can change timer period on-the-fly with ref esos_ChangeTimerPeriod</p>
+<p>note Since this heartbeat is performed in an ESOS software
+timer callabck, a flashing LED indicates that the ESOS system
+tick ISR is being called properly.  If the LED quits flashing,
+then the ESOS system tick has ceased working.  This probably indicates
+some catastrophic failure of the system.  However, the cause could
+be poorly-behaved user code that is manipulating the hardware registers
+with the timer or interrupt enables directly.  ESOS provides functions
+to change state of interrupts and user code should never modify the
+hardware used by ESOS to implement the system tick.
+hideinitializer</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span> 
+</pre></div>
+</div>
+<p>user-created timer callback</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="n">ESOS_USER_TIMER</span><span class="p">(</span> <span class="n">swTimerLED</span> <span class="p">)</span> <span class="p">{</span>
+  <span class="n">LED1</span> <span class="o">=</span> <span class="o">!</span><span class="n">LED1</span><span class="p">;</span>
+<span class="cp">#ifdef __linux</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">LED1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\a</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="n">fflush</span><span class="p">(</span><span class="n">stdout</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="cp">#endif</span>
+<span class="p">}</span> <span class="c1">//endof swTimerLED</span>
+ 
+</pre></div>
+</div>
+<p>Read a single character from the “in” stream, increment
+that character by one, and echo it back out the “out” stream</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="n">ESOS_USER_TASK</span><span class="p">(</span><span class="n">echo1</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">static</span>  <span class="kt">uint8_t</span>           <span class="n">u8_char</span><span class="p">;</span>
+
+  <span class="n">ESOS_TASK_BEGIN</span><span class="p">();</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">TRUE</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM</span><span class="p">();</span>
+    <span class="n">ESOS_TASK_WAIT_ON_GET_UINT8</span><span class="p">(</span> <span class="n">u8_char</span> <span class="p">);</span>
+    <span class="n">ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM</span><span class="p">();</span>
+    <span class="n">u8_char</span><span class="o">++</span><span class="p">;</span>
+    <span class="n">ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM</span><span class="p">();</span>
+    <span class="n">ESOS_TASK_WAIT_ON_SEND_UINT8</span><span class="p">(</span> <span class="n">u8_char</span> <span class="p">);</span>
+    <span class="n">ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM</span><span class="p">();</span>
+  <span class="p">}</span> <span class="c1">// endof while(TRUE)</span>
+  <span class="n">ESOS_TASK_END</span><span class="p">();</span>
+<span class="p">}</span> <span class="c1">// end upper_case()</span>
+
+<span class="cm">/****************************************************</span>
+<span class="cm"> *  user_init()</span>
+<span class="cm"> ****************************************************</span>
+<span class="cm"> */</span>
+<span class="kt">void</span> <span class="n">user_init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>Call the hardware-provided routines to print the
+HELLO_MSG to the screen.  Must use this call because
+the ESOS communications subsystems is not yet fully
+initialized, since this call is in user_init()</p>
+<p>In general, users should call hardware-specific
+function like this.</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>  <span class="n">__esos_unsafe_PutString</span><span class="p">(</span> <span class="n">HELLO_MSG</span> <span class="p">);</span>
+
+<span class="cp">#ifdef __linux</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>register our little ESOS task to mimic MCU’s TIMER T1 IRQ which kicks off
+the ESOS S/W timers when they expire</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>  <span class="n">esos_RegisterTask</span><span class="p">(</span> <span class="n">__simulated_isr</span> <span class="p">);</span>
+<span class="cp">#endif</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>configure our hardware to support to support our application</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>  <span class="n">CONFIG_LED1</span><span class="p">();</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>user_init() should register at least one user task</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>  <span class="n">esos_RegisterTask</span><span class="p">(</span><span class="n">echo1</span><span class="p">);</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>register our callback function with ESOS to create a software timer</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>  <span class="n">esos_RegisterTimer</span><span class="p">(</span> <span class="n">swTimerLED</span><span class="p">,</span> <span class="mi">250</span> <span class="p">);</span>
+
+<span class="p">}</span> <span class="c1">// end user_init()</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../contents.html">Documentation overview</a><ul>
+  <li><a href="../textbook_examples.html">Textbook examples</a><ul>
+      <li>Previous: <a href="app_reverse.c.html" title="previous chapter">app_reverse.c - demonstrates a user task that reverses a string</a></li>
+      <li>Next: <a href="app_semaphore1.c.html" title="next chapter">app_semaphore1.c - demonstrates use of semaphores for signaling synchronization</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/chap14/app_timerLEDecho.c"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="../_sources/chap14/app_timerLEDecho.c"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,154 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>ledflash.c - Flashes an LED, uses I/O macros. &#8212; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 6-May-2015 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/CodeChat.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '6-May-2015',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: ''
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="echo.c - Inputs chararacters from UART RX1, echos back chars+1." href="echo.c.html" />
+    <link rel="prev" title="ledflash_nomacros.c - Flashes an LED, does not use I/O macros." href="ledflash_nomacros.c.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <script type="text/javascript">document.addEventListener("DOMContentLoaded", function(event) {let walk_tree = function(elements,func_walk,func_child) {let walk_children = [];for (let index = 0; index < elements.length; ++index) {let that = elements[index];while (that && !func_walk(that)) {that = that.parentElement;}if (that) {that = func_walk(that);walk_children.push(that);while (that && func_child(that)) {that = func_child(that);walk_children.push(that);}}}return walk_children;};let code = document.getElementsByClassName("fenced-code");walk_tree(code, x => x.nextElementSibling, x => x.firstElementChild).map(x => {x.style.marginTop = 0;x.style.paddingTop = 0;});walk_tree(code, x => x.previousElementSibling, x => x.lastElementChild).map(x => {x.style.marginBottom = 0;x.style.paddingBottom = 0;});});</script><div class="section" id="ledflash-c-flashes-an-led-uses-i-o-macros">
+<h1>ledflash.c - Flashes an LED, uses I/O macros.<a class="headerlink" href="#ledflash-c-flashes-an-led-uses-i-o-macros" title="Permalink to this headline">¶</a></h1>
+<p>A simple program that flashes the Power LED, uses I/O macros.
+RB15 is configured as an open drain output, and drives an LED at
+the junction between the LED and a pullup resistor to VDD. When
+RB15 is driven low, the LED is off. When RB15 is driven high,
+the RB15 output floats because of the open drain, and so the
+LED is turned on by the pullup resistor to VDD. This allows
+the power LED to function as a ‘blinky’ LED in addition to serving
+as a power indicator.</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span> 
+<span class="cp">#include</span> <span class="cpf">&quot;pic24_all.h&quot;</span><span class="cp"></span>
+
+
+<span class="kt">void</span> <span class="nf">config_led1</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<p>Setup the RB15 pin to drive the LED
+Our normal procedure is to wire up the RB15 LED as opendrain.
+however, some chips do NOT support OD on RB15, so we need to
+first determine if the chip supports OD on RB15.  We will do
+that by seeing if the device header file has define the OD enable
+bit for RB15.  Unfortunately, Microchip has used two different
+names for this bit over the years, so we must check for both.
+If that SFR bit is not defined, then setup a normal CMOS digital
+output on RB15</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="cp">#if (defined(_ODCB15) || defined(_ODB15))</span>
+  <span class="n">CONFIG_RB15_AS_DIG_OUTPUT</span><span class="p">();</span>
+  <span class="n">ENABLE_RB15_OPENDRAIN</span><span class="p">();</span>
+<span class="cp">#else</span>
+  <span class="n">CONFIG_RB15_AS_DIG_OUTPUT</span><span class="p">();</span>
+<span class="cp">#endif</span>
+<span class="p">}</span>
+ 
+</pre></div>
+</div>
+<p>_LATB15 is the port register for RB15.</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="cp">#define LED1 (_LATB15)</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">configClock</span><span class="p">();</span>
+  <span class="n">config_led1</span><span class="p">();</span>
+  <span class="n">LED1</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>Delay long enough to see LED blink.</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>    <span class="n">DELAY_MS</span><span class="p">(</span><span class="mi">250</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>Toggle the LED.</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>    <span class="n">LED1</span> <span class="o">=</span> <span class="o">!</span><span class="n">LED1</span><span class="p">;</span>
+  <span class="p">}</span> <span class="c1">// end while (1)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../contents.html">Documentation overview</a><ul>
+  <li><a href="../textbook_examples.html">Textbook examples</a><ul>
+      <li>Previous: <a href="ledflash_nomacros.c.html" title="previous chapter">ledflash_nomacros.c - Flashes an LED, does not use I/O macros.</a></li>
+      <li>Next: <a href="echo.c.html" title="next chapter">echo.c - Inputs chararacters from UART RX1, echos back chars+1.</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/chap08/ledflash.c"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="../_sources/chap08/ledflash.c"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

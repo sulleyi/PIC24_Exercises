@@ -1,0 +1,145 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>mult_asm_tests - test some multiply combinations &#8212; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 6-May-2015 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/CodeChat.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '6-May-2015',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: ''
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="sat_add.c - Demonstrate saturating addition" href="sat_add.s.html" />
+    <link rel="prev" title="mult_32x32_uns - Demonstrate unsigned 32 bit multiplication" href="mult_32x32_uns.s.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <script type="text/javascript">document.addEventListener("DOMContentLoaded", function(event) {let walk_tree = function(elements,func_walk,func_child) {let walk_children = [];for (let index = 0; index < elements.length; ++index) {let that = elements[index];while (that && !func_walk(that)) {that = that.parentElement;}if (that) {that = func_walk(that);walk_children.push(that);while (that && func_child(that)) {that = func_child(that);walk_children.push(that);}}}return walk_children;};let code = document.getElementsByClassName("fenced-code");walk_tree(code, x => x.nextElementSibling, x => x.firstElementChild).map(x => {x.style.marginTop = 0;x.style.paddingTop = 0;});walk_tree(code, x => x.previousElementSibling, x => x.lastElementChild).map(x => {x.style.marginBottom = 0;x.style.paddingBottom = 0;});});</script><div class="section" id="mult-asm-tests-test-some-multiply-combinations">
+<h1>mult_asm_tests - test some multiply combinations<a class="headerlink" href="#mult-asm-tests-test-some-multiply-combinations" title="Permalink to this headline">¶</a></h1>
+<div class="code fenced-code highlight-pic24"><div class="highlight"><pre><span></span> 
+<span class="kd">.include</span> <span class="s">&quot;p24Hxxxx.inc&quot;</span>
+
+<span class="kd">.global</span> <span class="nv">__reset</span>          <span class="c1">;The label for the first line of code.</span>
+
+
+         <span class="kd">.data</span>            <span class="c1">;unitialized data section</span>
+
+         <span class="kd">.bss</span>
+<span class="c1">;;These start at location 0x0800 because 0-0x07FF reserved for SFRs</span>
+<span class="nl">u16_k:</span>   <span class="kd">.space</span> <span class="mf">2</span>        <span class="c1">;Allocating space (in bytes) to variable.</span>
+<span class="nl">u8_j:</span>    <span class="kd">.space</span> <span class="mf">1</span>        <span class="c1">;Allocating space (in bytes) to variable.</span>
+
+<span class="kd">.text</span>                          <span class="c1">;Start of Code section</span>
+<span class="nl">__reset:</span>                       <span class="c1">; first instruction located at __reset label</span>
+       <span class="k">mov</span> <span class="kc">#</span><span class="nv">__SP_init</span><span class="p">,</span> <span class="nb">w15</span>     <span class="c1">;Initalize the Stack Pointer</span>
+       <span class="k">mov</span> <span class="kc">#</span><span class="nv">__SPLIM_init</span><span class="p">,</span><span class="nb">W0</span>
+       <span class="k">mov</span> <span class="nb">W0</span><span class="p">,</span> <span class="nv">SPLIM</span>           <span class="c1">;Initialize the stack limit register</span>
+       <span class="k">rcall</span> <span class="nv">main</span>              <span class="c1">;call main()</span>
+       <span class="k">reset</span>                   <span class="c1">;start over</span>
+ <span class="c1">;__SP_init set by linker to be after allocated data</span>
+
+<span class="nl">main:</span>
+      <span class="k">mov</span> <span class="kc">#</span><span class="mh">0xFFFF</span><span class="p">,</span><span class="nb">W0</span>  <span class="c1">; 65535 unsigned, -1 signed</span>
+      <span class="k">mov</span> <span class="kc">#</span><span class="mh">0x1</span><span class="p">,</span><span class="nb">W1</span>     <span class="c1">; 1 unsigned, +1 signed</span>
+
+      <span class="k">mul.uu</span> <span class="nb">W0</span><span class="p">,</span><span class="nb">W0</span><span class="p">,</span><span class="nb">W2</span>  <span class="c1">;65535 * 65535 = 4294836225 = 0xFFFE0001 = W3:W2</span>
+      <span class="k">mul.ss</span> <span class="nb">W0</span><span class="p">,</span><span class="nb">W0</span><span class="p">,</span><span class="nb">W4</span>  <span class="c1">;-1 * -1 = +1 = 0x00000001 = W5:W4</span>
+      <span class="k">mul.uu</span> <span class="nb">W0</span><span class="p">,</span><span class="nb">W1</span><span class="p">,</span><span class="nb">W6</span>  <span class="c1">;65535 * 1 = 65535 = 0x0000FFFF = W7:W6</span>
+      <span class="k">mul.ss</span> <span class="nb">W0</span><span class="p">,</span><span class="nb">W1</span><span class="p">,</span><span class="nb">W8</span>  <span class="c1">;-1 * 1 = -1 = 0xFFFFFFFF = W9:W8</span>
+      <span class="k">mul.uu</span> <span class="nb">W0</span><span class="p">,</span><span class="kc">#</span><span class="mf">1</span><span class="p">,</span><span class="nb">W10</span> <span class="c1">;65535 * 1 = 65535 = 0x0000FFFF = W11:10</span>
+      <span class="k">mul.su</span> <span class="nb">W0</span><span class="p">,</span><span class="kc">#</span><span class="mf">1</span><span class="p">,</span><span class="nb">W12</span> <span class="c1">;-1 * 1 = -1 = 0xFFFFFFFF = W13:W12</span>
+
+
+<span class="nl">done:</span>                     <span class="c1">;do not return</span>
+       <span class="k">bra</span> <span class="nv">done</span>
+
+
+
+
+
+
+    <span class="kd">.end</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../contents.html">Documentation overview</a><ul>
+  <li><a href="../textbook_examples.html">Textbook examples</a><ul>
+      <li>Previous: <a href="mult_32x32_uns.s.html" title="previous chapter">mult_32x32_uns - Demonstrate unsigned 32 bit multiplication</a></li>
+      <li>Next: <a href="sat_add.s.html" title="next chapter">sat_add.c - Demonstrate saturating addition</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/chap07/mult_asm_tests.s"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="../_sources/chap07/mult_asm_tests.s"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

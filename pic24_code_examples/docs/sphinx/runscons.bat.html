@@ -1,0 +1,172 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>runscons.bat - Run SCons, collecting and filtering warnings &#8212; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 6-May-2015 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/CodeChat.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '6-May-2015',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: ''
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="SConstruct.py - Build all libraries and examples over many chips" href="SConstruct.py.html" />
+    <link rel="prev" title="runAStyle.bat - enforce code formatting standards" href="runAStyle.bat.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <script type="text/javascript">document.addEventListener("DOMContentLoaded", function(event) {let walk_tree = function(elements,func_walk,func_child) {let walk_children = [];for (let index = 0; index < elements.length; ++index) {let that = elements[index];while (that && !func_walk(that)) {that = that.parentElement;}if (that) {that = func_walk(that);walk_children.push(that);while (that && func_child(that)) {that = func_child(that);walk_children.push(that);}}}return walk_children;};let code = document.getElementsByClassName("fenced-code");walk_tree(code, x => x.nextElementSibling, x => x.firstElementChild).map(x => {x.style.marginTop = 0;x.style.paddingTop = 0;});walk_tree(code, x => x.previousElementSibling, x => x.lastElementChild).map(x => {x.style.marginBottom = 0;x.style.paddingBottom = 0;});});</script><div class="section" id="runscons-bat-run-scons-collecting-and-filtering-warnings">
+<h1>runscons.bat - Run SCons, collecting and filtering warnings<a class="headerlink" href="#runscons-bat-run-scons-collecting-and-filtering-warnings" title="Permalink to this headline">¶</a></h1>
+<p>First, run the build, collecting all errors and warnings into <code class="docutils literal"><span class="pre">err.txt</span></code>.</p>
+<div class="code fenced-code highlight-bat"><div class="highlight"><pre><span></span><span class="k">call</span> scons -j 1 <span class="nv">%*</span> <span class="p">&gt;</span> err.txt <span class="mi">2</span><span class="p">&gt;&amp;</span><span class="mi">1</span>
+ 
+</pre></div>
+</div>
+<div class="section" id="remove-warnings-generated-during-compiles">
+<h2>Remove #warnings generated during compiles<a class="headerlink" href="#remove-warnings-generated-during-compiles" title="Permalink to this headline">¶</a></h2>
+<p>Note: the <code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">errn.txt</span></code> was placed immediately after findstr below, since the
+use of <code class="docutils literal"><span class="pre">\&quot;</span></code> confuses cmd.exe (but not findstr). Placing it at the end
+prevents cmd.exe from capturing output to the <code class="docutils literal"><span class="pre">errn.txt</span></code> file.</p>
+<p>Therefore, I can’t use the ^ line continuation character following lines where
+the <code class="docutils literal"><span class="pre">&quot;</span></code> symbols don’t match.</p>
+<div class="code fenced-code highlight-bat"><div class="highlight"><pre><span></span>findstr <span class="p">&gt;</span> err1.txt /V <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: #warning \&quot;</span>Baud rates of 19200 or lower recommended for this clock choice.\<span class="s2">&quot;&quot;</span>  <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: #warning \&quot;</span>Using dummy function for configPinsForLowPower() in common/pic24_util.c.\<span class="s2">&quot;&quot;</span> <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: #warning \&quot;</span>Using default config bit settings for the <span class="s2">&quot; /C:&quot;</span>warning: #warning \<span class="s2">&quot;Clock configured&quot;</span> err.txt
+
+findstr <span class="p">&gt;</span> err2.txt /V <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: #warning \&quot;</span>UART2 pin mappings not defined. See comments below for more info.\<span class="s2">&quot;&quot;</span> <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: #warning \&quot;</span>UART3 pin mappings not defined. See comments below for more info.\<span class="s2">&quot;&quot;</span> <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: #warning \&quot;</span>UART4 pin mappings not defined. See comments below for more info.\<span class="s2">&quot;&quot;</span> <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: #warning \&quot;</span>Using dummy function for configPinsForLowPower().\<span class="s2">&quot;&quot;</span> <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: #warning \&quot;</span>PLL Enabled.\<span class="s2">&quot;&quot;</span> <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;lib\src\pic24_ecan.c:233:2: warning: #warning \&quot;</span>ECAN module not configured for current processor frequency! Edit function configECAN1().\<span class="s2">&quot;&quot;</span> <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;lib\src\pic24_uart.c:263:5: warning: #warning Building configUART1() for the Dangerous Web target.&quot;</span> <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: #warning \&quot;</span>This example only works with the dsPIC33E/PIC24E families\<span class="s2">&quot;&quot;</span> <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: #warning \&quot;</span>This example does not work with the dsPIC33E/PIC24E families.\<span class="s2">&quot;&quot;</span> <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: #warning \&quot;</span>This is a E family processor, which this example does not support.\<span class="s2">&quot;&quot;</span> <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: #warning \&quot;</span>DAC_R2R.C built for SPI-based 12-bit MAX5353 DAC connected to RB14(SDO) and RB13(SCLK).\<span class="s2">&quot;&quot;</span> <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: #warning \&quot;</span>This processor selection has the DMA module; this code example is incompatible with a PIC24 CPU that has DMA.\<span class="s2">&quot;&quot;</span> <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: #warning \&quot;</span>This example only works with a device that has a secondary oscillator.\<span class="s2">&quot;&quot;</span> <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: #warning \&quot;</span>and an RTCC module.\<span class="s2">&quot;&quot;</span> <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: #warning \&quot;</span>This processor selection does not have a DMA module; this code example is incompatible with a PIC24 CPU that does not have DMA.\<span class="s2">&quot;&quot;</span>  <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: #warning \&quot;</span>OR this is a E family processor, which this example does not support.\<span class="s2">&quot;&quot;</span> <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: #warning \&quot;</span>For all PIC24F and some PIC24E/dsPIC33E family members, the DATA_FLASH_PAGE is set to the second to last flash page instead of the last page,\<span class="s2">&quot;&quot;</span> <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: #warning \&quot;</span>as the last flash page in the 24F family contains the configuration bits.\<span class="s2">&quot;&quot;</span> <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: #warning Building configUART1() for the Rev.F14 Embedded Systems target.&quot;</span> <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: #warning Building configUART1() for the Rev.C1 Embedded Systems target.&quot;</span> <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: #warning Building configUART1() for the StarterBoard_28P target.&quot;</span> <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: #warning \&quot;</span>Ensure that the PLLDIV value is set to divide by 2 in the configuration bits for <span class="s2">&quot; /C:&quot;</span>warning: #warning \<span class="s2">&quot;Edit common/pic24_configbits.c to add config bits for your processor!\&quot;&quot; err1.txt</span>
+ 
+</pre></div>
+</div>
+</div>
+<div class="section" id="work-around-compiler-warnings-i-can-t-figure-out-how-to-suppress">
+<h2>Work around compiler warnings I can’t figure out how to suppress<a class="headerlink" href="#work-around-compiler-warnings-i-can-t-figure-out-how-to-suppress" title="Permalink to this headline">¶</a></h2>
+<div class="code fenced-code highlight-bat"><div class="highlight"><pre><span></span>findstr <span class="p">&gt;</span> err3.txt /V <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;\bootloader\pic24_dspic33_bootloader.X\mem.c:119:1: warning: control reaches end of non-void function&quot;</span> <span class="se">^</span>
+<span class="se">/</span>C:<span class="s2">&quot;warning: Taking the address of &#39;&quot;</span> <span class="se">^</span>
+<span class="se">e</span>rr2.txt
+ 
+</pre></div>
+</div>
+</div>
+<div class="section" id="output-only-errors-and-warnings">
+<h2>Output only errors and warnings<a class="headerlink" href="#output-only-errors-and-warnings" title="Permalink to this headline">¶</a></h2>
+<div class="code fenced-code highlight-bat"><div class="highlight"><pre><span></span>findstr /C:<span class="s2">&quot;warning&quot;</span> /C:<span class="s2">&quot;error&quot;</span> err3.txt <span class="p">&gt;</span> build_errors.txt
+<span class="k">echo</span> Errors and warnings:
+<span class="k">type</span> build_errors.txt
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="contents.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">runscons.bat - Run SCons, collecting and filtering warnings</a><ul>
+<li><a class="reference internal" href="#remove-warnings-generated-during-compiles">Remove #warnings generated during compiles</a></li>
+<li><a class="reference internal" href="#work-around-compiler-warnings-i-can-t-figure-out-how-to-suppress">Work around compiler warnings I can’t figure out how to suppress</a></li>
+<li><a class="reference internal" href="#output-only-errors-and-warnings">Output only errors and warnings</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="contents.html">Documentation overview</a><ul>
+  <li><a href="utilities.html">Utilities</a><ul>
+      <li>Previous: <a href="runAStyle.bat.html" title="previous chapter">runAStyle.bat - enforce code formatting standards</a></li>
+      <li>Next: <a href="SConstruct.py.html" title="next chapter">SConstruct.py - Build all libraries and examples over many chips</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/runscons.bat"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/runscons.bat"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

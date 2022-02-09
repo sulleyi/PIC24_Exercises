@@ -1,0 +1,640 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>convert_gld.py &#8212; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 6-May-2015 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/CodeChat.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '6-May-2015',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: ''
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="data_sheet_to_csv.py - GUI to assist in translating Microchip data sheets to pin mappings" href="../../../templates/data_sheet_to_csv.py.html" />
+    <link rel="prev" title="pic24_uart-small.h - Headers for bare minimum UART functionality for the bootloader." href="../pic24_uart-small.h.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <script type="text/javascript">document.addEventListener("DOMContentLoaded", function(event) {let walk_tree = function(elements,func_walk,func_child) {let walk_children = [];for (let index = 0; index < elements.length; ++index) {let that = elements[index];while (that && !func_walk(that)) {that = that.parentElement;}if (that) {that = func_walk(that);walk_children.push(that);while (that && func_child(that)) {that = func_child(that);walk_children.push(that);}}}return walk_children;};let code = document.getElementsByClassName("fenced-code");walk_tree(code, x => x.nextElementSibling, x => x.firstElementChild).map(x => {x.style.marginTop = 0;x.style.paddingTop = 0;});walk_tree(code, x => x.previousElementSibling, x => x.lastElementChild).map(x => {x.style.marginBottom = 0;x.style.paddingBottom = 0;});});</script><div class="section" id="convert-gld-py">
+<h1>convert_gld.py<a class="headerlink" href="#convert-gld-py" title="Permalink to this headline">¶</a></h1>
+<p>Given Microchip’s standard GLD files, create GLD files for the bootloader and for programs for use with the bootloader.</p>
+<p>The documentation of expected Microchip GLD contents was copied from xc16 v1.30.</p>
+<div class="section" id="imports">
+<h2>Imports<a class="headerlink" href="#imports" title="Permalink to this headline">¶</a></h2>
+<p>These are listed in the order prescribed by <a class="reference external" href="http://www.python.org/dev/peps/pep-0008/#imports">PEP 8</a>.</p>
+<div class="section" id="standard-library">
+<h3>Standard library<a class="headerlink" href="#standard-library" title="Permalink to this headline">¶</a></h3>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">string</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="third-party-imports">
+<h3>Third-party imports<a class="headerlink" href="#third-party-imports" title="Permalink to this headline">¶</a></h3>
+<p>None.</p>
+</div>
+<div class="section" id="local-application-imports">
+<h3>Local application imports<a class="headerlink" href="#local-application-imports" title="Permalink to this headline">¶</a></h3>
+<p>None.</p>
+<p>Create a GLD file for use with an application using the bootloader.</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">makeAppGld</span><span class="p">(</span><span class="n">infileName</span><span class="p">,</span> <span class="n">bootGldName</span><span class="p">,</span> <span class="n">vectorList</span><span class="p">,</span> <span class="n">startAddr</span><span class="p">,</span> <span class="n">family</span><span class="p">):</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>Open the input file.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>    <span class="k">try</span><span class="p">:</span>
+        <span class="n">infile</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">infileName</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Cannot open file {infileName}&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>Open the output file.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>    <span class="k">try</span><span class="p">:</span>
+        <span class="n">outfile</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">bootGldName</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Cannot open file {bootGldName}&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;/* GLD file for PIC24 application using the Bully bootloader. */</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">state</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">infile</span><span class="o">.</span><span class="n">readlines</span><span class="p">():</span>
+        <span class="n">words</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>State 0: before the memory section. Simply echo what’s read.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:6.0em;"><p>Look for the line <code class="docutils literal"><span class="pre">MEMORY</span></code>, in which the memory regions are defined.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;MEMORY&#39;</span><span class="p">:</span>
+                <span class="n">state</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>State 1: in the memory region definition.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:6.0em;"><p>Look for the line (word indexes added above; <code class="docutils literal"><span class="pre">ws</span></code> represents leading whitespace):</p>
+<div class="highlight-none"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2</pre></div></td><td class="code"><div class="highlight"><pre><span></span>ws   0      1    2    3   4    5              6   7    8
+  program (xr)   : ORIGIN = 0x200,         LENGTH = 0x55EC
+</pre></div>
+</td></tr></table></div>
+<p>(leading spaced removed; addresses will, of course, vary).</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;program&#39;</span><span class="p">:</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:8.0em;"><p>Add a section of jump vectors for a remapped IVT, whose size varies for the new E family parts versus the older H/F parts. Note that the starting address begins after the <a class="reference internal" href="#timeout-value">timeout value</a>, which takes 1 word of program memory (2 bytes), hence the - 2 factor below.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>                <span class="k">if</span> <span class="n">family</span> <span class="o">==</span> <span class="s1">&#39;PIC24E&#39;</span> <span class="ow">or</span> <span class="n">family</span> <span class="o">==</span> <span class="s1">&#39;dsPIC33E&#39;</span><span class="p">:</span>
+                    <span class="n">s</span> <span class="o">=</span> <span class="s1">&#39;  j_ivt          : ORIGIN = 0x</span><span class="si">%x</span><span class="s1">,          LENGTH = 0x300</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">startAddr</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+                    <span class="n">progStart</span> <span class="o">=</span> <span class="n">startAddr</span> <span class="o">+</span> <span class="mh">0x300</span> <span class="o">-</span> <span class="mi">2</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">s</span> <span class="o">=</span> <span class="s1">&#39;  j_ivt          : ORIGIN = 0x</span><span class="si">%x</span><span class="s1">,          LENGTH = 0x200</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">startAddr</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+                    <span class="n">progStart</span> <span class="o">=</span> <span class="n">startAddr</span> <span class="o">+</span> <span class="mh">0x200</span> <span class="o">-</span> <span class="mi">2</span>
+                <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:8.0em;"><p>Get the address of the <code class="docutils literal"><span class="pre">ORIGIN</span></code>, stripping of the trailing comma and converting to an int.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>                <span class="n">origin</span> <span class="o">=</span> <span class="n">words</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span>
+                <span class="n">origin</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+                <span class="n">origin</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">origin</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:8.0em;"><p>Get the length of this section as an int.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>                <span class="n">length</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">words</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="mi">16</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:8.0em;"><p>Compute the change in this section’s length: the difference of the new starting location and the old (original) starting location.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>                <span class="n">delta</span> <span class="o">=</span> <span class="n">progStart</span> <span class="o">-</span> <span class="n">origin</span>
+                <span class="n">newLength</span> <span class="o">=</span> <span class="n">length</span> <span class="o">-</span> <span class="n">delta</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:8.0em;"><p>Adjust this to make room for the bootloader.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>                <span class="n">s</span> <span class="o">=</span> <span class="s1">&#39;  program (xr)   : ORIGIN = 0x</span><span class="si">%x</span><span class="s1">,         LENGTH = 0x</span><span class="si">%x</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">progStart</span><span class="p">,</span> <span class="n">newLength</span><span class="p">)</span>
+                <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                <span class="n">state</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
+            <span class="k">else</span><span class="p">:</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:8.0em;"><p>Echo everything else.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>                <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>State 2: after the program section is defined.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:6.0em;"><p>Look for the closing brace of the memory section.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;}&#39;</span><span class="p">:</span>
+                <span class="n">state</span> <span class="o">+=</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:8.0em;"><p>Write out the addresses for the remapped IVT.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>                <span class="n">s</span> <span class="o">=</span> <span class="s1">&#39;__JIVT_BASE          = 0x</span><span class="si">%x</span><span class="s1">;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">startAddr</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">vector</span> <span class="ow">in</span> <span class="n">vectorList</span><span class="p">:</span>
+                    <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> = 0x</span><span class="si">%x</span><span class="s2">;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="s1">&#39;J&#39;</span> <span class="o">+</span> <span class="n">vector</span><span class="p">,</span> <span class="n">startAddr</span><span class="p">)</span>
+                    <span class="n">startAddr</span> <span class="o">+=</span> <span class="mi">4</span>
+                    <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                <span class="k">continue</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>State 3: until the end of the reset instruction.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:6.0em;"><p>Look for the line:</p>
+<div class="highlight-none"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2</pre></div></td><td class="code"><div class="highlight"><pre><span></span>ws0   1
+  } &gt;reset
+</pre></div>
+</td></tr></table></div>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;}&#39;</span> <span class="ow">and</span> <span class="n">words</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;&gt;reset&#39;</span><span class="p">:</span>
+                <span class="n">state</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>State 4: until the end of the Interrupt Vector Tables comment.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:6.0em;"><p>The previous lines:</p>
+<div class="highlight-none"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4
+5
+6
+7
+8</pre></div></td><td class="code"><div class="highlight"><pre><span></span>ws 0
+  /*
+  ** Interrupt Vector Tables
+  **
+  ** The primary and alternate tables are loaded
+  ** here, between sections .reset and .text.
+  ** Vector table source code appears below.
+  */
+</pre></div>
+</td></tr></table></div>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;*/&#39;</span><span class="p">:</span>
+                <span class="n">state</span> <span class="o">+=</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:8.0em;"><p>Begin a section containing the <span class="target" id="remapped-ivt">remapped IVT</span> (a series of jump, e.g. GOTO statements).</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>                <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;.j_ivt __JIVT_BASE :</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39; {</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:8.0em;"><p>The first word in the IVT is the <span class="target" id="timeout-value">timeout value</span>.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>                <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39; SHORT(0x02);  /* timeout value */</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39; SHORT(0x00);</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">vector</span> <span class="ow">in</span> <span class="n">vectorList</span><span class="p">:</span>
+                    <span class="n">s</span> <span class="o">=</span> <span class="s1">&#39;    SHORT(DEFINED(</span><span class="si">%s</span><span class="s1">) ? ABSOLUTE(</span><span class="si">%s</span><span class="s1">) : </span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">vector</span><span class="p">,</span> <span class="n">vector</span><span class="p">)</span>
+                    <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                    <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;     ABSOLUTE(__DefaultInterrupt));</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;     SHORT(0x04);</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="n">s</span> <span class="o">=</span> <span class="s1">&#39;    SHORT(((DEFINED(</span><span class="si">%s</span><span class="s1">) ? ABSOLUTE(</span><span class="si">%s</span><span class="s1">) : </span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">vector</span><span class="p">,</span> <span class="n">vector</span><span class="p">)</span>
+                    <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                    <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;     ABSOLUTE(__DefaultInterrupt)) &gt;&gt; 16) &amp; 0x7F);</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;     SHORT(0);</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39; } &gt;j_ivt</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">continue</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>State 5: until <code class="docutils literal"><span class="pre">#if</span> <span class="pre">__XC16_VERSION</span> <span class="pre">&lt;</span> <span class="pre">1026</span></code></p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="mi">5</span><span class="p">:</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:6.0em;"><p>Look for a #if that excludes the IVT.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>            <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;#if __XC16_VERSION &lt; 1026&#39;</span><span class="p">):</span>
+                <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#if 1  /* Always include the IVT. Was: #if __XC16_VERSION &lt; 1026 */</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">state</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
+            <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>State 6: until the <span class="target" id="beginning-of-the-ivt">beginning of the IVT</span>.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="mi">6</span><span class="p">:</span>
+            <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:6.0em;"><p>Replace it with the address of the remapped IVT. The expected line is:</p>
+<div class="highlight-none"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2</pre></div></td><td class="code"><div class="highlight"><pre><span></span>  0      1      2
+.ivt __IVT_BASE :
+</pre></div>
+</td></tr></table></div>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;.ivt&#39;</span><span class="p">:</span>
+                <span class="n">state</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;{</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">vector</span> <span class="ow">in</span> <span class="n">vectorList</span><span class="p">:</span>
+                    <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;LONG(</span><span class="si">%s</span><span class="s2">);</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="s1">&#39;J&#39;</span> <span class="o">+</span> <span class="n">vector</span><span class="p">)</span>
+                    <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                <span class="k">continue</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>State 7: until the <span class="target" id="end-of-the-ivt">end of the IVT</span>.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="mi">7</span><span class="p">:</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:6.0em;"><p>Skip everything until the closing brace.
+The expected line is:</p>
+<div class="highlight-none"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2</pre></div></td><td class="code"><div class="highlight"><pre><span></span>ws0  1
+  } &gt;ivt
+</pre></div>
+</td></tr></table></div>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;}&#39;</span><span class="p">:</span>
+                <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+                <span class="n">state</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
+ 
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>State 8: until the <span class="target" id="beginning-of-the-aivt">beginning of the AIVT</span>. The process is the same as the IVT. Note that not all chips have this defined.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="mi">8</span><span class="p">:</span>
+            <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;.aivt&#39;</span><span class="p">:</span>
+                <span class="n">state</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;{</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">vector</span> <span class="ow">in</span> <span class="n">vectorList</span><span class="p">:</span>
+                    <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;LONG(</span><span class="si">%s</span><span class="s2">);</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="s1">&#39;J&#39;</span> <span class="o">+</span> <span class="n">vector</span><span class="p">)</span>
+                    <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                <span class="k">continue</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>State 9: until the <span class="target" id="end-of-the-aivt">end of the AIVT</span>.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="mi">9</span><span class="p">:</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:6.0em;"><p>The expected line is:</p>
+<div class="highlight-none"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2</pre></div></td><td class="code"><div class="highlight"><pre><span></span>ws0  1
+  } &gt;aivt
+</pre></div>
+</td></tr></table></div>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;}&#39;</span><span class="p">:</span>
+                <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+                <span class="n">state</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>State 10: until the end of the file. Just echo everything.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="mi">10</span><span class="p">:</span>
+            <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+
+    <span class="n">outfile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">infile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">makeBootGld</span><span class="p">(</span><span class="n">infileName</span><span class="p">,</span> <span class="n">bootGldName</span><span class="p">,</span> <span class="n">vectorList</span><span class="p">,</span> <span class="n">startAddr</span><span class="p">,</span> <span class="n">family</span><span class="p">):</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>Open the input file.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>    <span class="k">try</span><span class="p">:</span>
+        <span class="n">infile</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">infileName</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Cannot open file {infileName}&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>Open the output file.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>    <span class="k">try</span><span class="p">:</span>
+        <span class="n">outfile</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">bootGldName</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Cannot open file {bootGldName}&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;/* GLD file for Bully bootloader firmware */</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">state</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">infile</span><span class="o">.</span><span class="n">readlines</span><span class="p">():</span>
+        <span class="n">words</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>State 0: before the memory section. Simply echo what’s read.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:6.0em;"><p>Look for the line <code class="docutils literal"><span class="pre">MEMORY</span></code>, in which the memory regions are defined.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;MEMORY&#39;</span><span class="p">:</span>
+                <span class="n">state</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>State 1: until the end of the memory section. Echo what’s read.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:6.0em;"><p>Look for the closing brace of the memory section.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;}&#39;</span><span class="p">:</span>
+                <span class="n">state</span> <span class="o">+=</span> <span class="mi">1</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:8.0em;"><p>Write out the IVT addresses which point to the application’s <a class="reference internal" href="#remapped-ivt">remapped IVT</a>.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>                <span class="k">for</span> <span class="n">vector</span> <span class="ow">in</span> <span class="n">vectorList</span><span class="p">:</span>
+                    <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> = 0x</span><span class="si">%x</span><span class="s2">;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="s1">&#39;J&#39;</span> <span class="o">+</span> <span class="n">vector</span><span class="p">,</span> <span class="n">startAddr</span><span class="p">)</span>
+                    <span class="n">startAddr</span> <span class="o">+=</span> <span class="mi">4</span>
+                    <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                <span class="k">continue</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>State 2: until <code class="docutils literal"><span class="pre">#if</span> <span class="pre">__XC16_VERSION</span> <span class="pre">&lt;</span> <span class="pre">1026</span></code></p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:6.0em;"><p>Look for a #if that excludes the IVT.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>            <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;#if __XC16_VERSION &lt; 1026&#39;</span><span class="p">):</span>
+                <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#if 1  // Always include the IVT. Was: #if __XC16_VERSION &lt; 1026</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">state</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
+            <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>State 3: until the <a class="reference internal" href="#beginning-of-the-ivt">beginning of the IVT</a> – see docs there for this state.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;.ivt&#39;</span><span class="p">:</span>
+                <span class="n">state</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;{</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">vector</span> <span class="ow">in</span> <span class="n">vectorList</span><span class="p">:</span>
+                    <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;LONG(</span><span class="si">%s</span><span class="s2">);</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="s1">&#39;J&#39;</span> <span class="o">+</span> <span class="n">vector</span><span class="p">)</span>
+                    <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                <span class="k">continue</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>State 4: until the <a class="reference internal" href="#end-of-the-ivt">end of the IVT</a> – see docs there for this state.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;}&#39;</span><span class="p">:</span>
+                <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+                <span class="n">state</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>State 5: until the <a class="reference internal" href="#beginning-of-the-aivt">beginning of the AIVT</a> – see docs there for this state.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;.aivt&#39;</span><span class="p">:</span>
+                <span class="n">state</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;{</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">vector</span> <span class="ow">in</span> <span class="n">vectorList</span><span class="p">:</span>
+                    <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;LONG(</span><span class="si">%s</span><span class="s2">);</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="s1">&#39;J&#39;</span> <span class="o">+</span> <span class="n">vector</span><span class="p">)</span>
+                    <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                <span class="k">continue</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>State 6: until the <a class="reference internal" href="#end-of-the-aivt">end of the AIVT</a>.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="mi">6</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;}&#39;</span><span class="p">:</span>
+                <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+                <span class="n">state</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>State 7: until the end of the file. Just echo everything.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="mi">7</span><span class="p">:</span>
+            <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+
+    <span class="n">outfile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">infile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">parseGldFile</span><span class="p">(</span><span class="n">infileName</span><span class="p">,</span> <span class="n">bootGldName</span><span class="p">,</span> <span class="n">appGldName</span><span class="p">,</span> <span class="n">family</span><span class="p">):</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>First read all vectors.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>    <span class="k">try</span><span class="p">:</span>
+        <span class="n">infile</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">infileName</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Cannot open file {infileName}&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">vectorList</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="mi">0</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>Set up to replace parentheses with spaces.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>    <span class="n">maptable</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">maketrans</span><span class="p">(</span><span class="s1">&#39;()&#39;</span><span class="p">,</span> <span class="s1">&#39;  &#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">infile</span><span class="o">.</span><span class="n">readlines</span><span class="p">():</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>Replace parentheses with spaces.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="n">maptable</span><span class="p">)</span>
+        <span class="n">words</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>State 0: until the <a class="reference internal" href="#beginning-of-the-ivt">beginning of the IVT</a> – see docs there.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;.ivt&#39;</span> <span class="ow">and</span> <span class="n">words</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;__IVT_BASE&#39;</span><span class="p">:</span>
+                <span class="n">state</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>State 5: until the <a class="reference internal" href="#beginning-of-the-aivt">beginning of the AIVT</a> – see docs there for this state.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:6.0em;"><p>When the AIVT starts, we’re done.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>            <span class="k">if</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;.aivt&#39;</span><span class="p">:</span>
+                <span class="k">break</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:6.0em;"><p>Look for interrupt vectors. The expected line (recall that parents will becomes spaces):</p>
+<div class="highlight-none"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3</pre></div></td><td class="code"><div class="highlight"><pre><span></span>ws0      1            2            3    4             5
+LONG( DEFINED(__OscillatorFail)    ? ABSOLUTE(__OscillatorFail)    :
+     ABSOLUTE(__DefaultInterrupt));
+</pre></div>
+</td></tr></table></div>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>            <span class="k">if</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;LONG&#39;</span> <span class="ow">and</span> <span class="n">words</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;DEFINED&#39;</span><span class="p">:</span>
+                <span class="n">vectorList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">words</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+    <span class="n">infile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>Now create the bootloader GLD file.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>    <span class="k">if</span> <span class="p">(</span><span class="n">family</span> <span class="o">==</span> <span class="s1">&#39;PIC24E&#39;</span> <span class="ow">or</span> <span class="n">family</span> <span class="o">==</span> <span class="s1">&#39;dsPIC33E&#39;</span><span class="p">):</span>
+        <span class="n">startAddr</span> <span class="o">=</span> <span class="mh">0x1002</span>  <span class="c1"># this is because of larger erase page size on most PIC24E/PIC33E family members</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">startAddr</span> <span class="o">=</span> <span class="mh">0xC02</span>
+    <span class="n">makeBootGld</span><span class="p">(</span><span class="n">infileName</span><span class="p">,</span> <span class="n">bootGldName</span><span class="p">,</span> <span class="n">vectorList</span><span class="p">,</span> <span class="n">startAddr</span><span class="p">,</span> <span class="n">family</span><span class="p">)</span>
+    <span class="n">makeAppGld</span><span class="p">(</span><span class="n">infileName</span><span class="p">,</span> <span class="n">appGldName</span><span class="p">,</span> <span class="n">vectorList</span><span class="p">,</span> <span class="n">startAddr</span><span class="p">,</span> <span class="n">family</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<p>Convert a directory of GLD files.</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">convertDir</span><span class="p">(</span><span class="n">srcdir</span><span class="p">,</span> <span class="n">dstdir</span><span class="p">,</span> <span class="n">family</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">infile</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">srcdir</span><span class="p">):</span>
+        <span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">infile</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ext</span> <span class="o">==</span> <span class="s2">&quot;.gld&quot;</span><span class="p">:</span>
+            <span class="n">appfile</span> <span class="o">=</span> <span class="n">root</span> <span class="o">+</span> <span class="s2">&quot;_bootldr.gld&quot;</span>
+            <span class="n">apppath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dstdir</span><span class="p">,</span> <span class="n">appfile</span><span class="p">)</span>
+            <span class="n">srcpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">srcdir</span><span class="p">,</span> <span class="n">infile</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Converting: {infile}&quot;</span><span class="p">)</span>
+            <span class="n">parseGldFile</span><span class="p">(</span><span class="n">srcpath</span><span class="p">,</span> <span class="n">infile</span><span class="p">,</span> <span class="n">apppath</span><span class="p">,</span> <span class="n">family</span><span class="p">)</span>
+
+
+<span class="n">xc16_version</span> <span class="o">=</span> <span class="s1">&#39;v1.30&#39;</span>
+<span class="n">C30_homedir</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;C:\Program Files (x86)\Microchip\xc16\{}\support&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">xc16_version</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">C30_homedir</span><span class="p">):</span>
+    <span class="n">C30_homedir</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;C:\Program Files\Microchip\xc16\{}\support&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">xc16_version</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">C30_homedir</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Cannot determine Microchip xc16 home directory, exiting.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+
+<span class="n">dstdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;..&quot;</span><span class="p">,</span> <span class="s2">&quot;..&quot;</span><span class="p">,</span> <span class="s2">&quot;..&quot;</span><span class="p">,</span> <span class="s2">&quot;lib&quot;</span><span class="p">,</span> <span class="s2">&quot;lkr&quot;</span><span class="p">)</span>
+
+<span class="n">tdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">C30_homedir</span><span class="p">,</span> <span class="s2">&quot;PIC24H&quot;</span><span class="p">,</span> <span class="s2">&quot;gld&quot;</span><span class="p">)</span>
+<span class="n">convertDir</span><span class="p">(</span><span class="n">tdir</span><span class="p">,</span> <span class="n">dstdir</span><span class="p">,</span> <span class="s2">&quot;PIC24H&quot;</span><span class="p">)</span>
+
+<span class="n">tdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">C30_homedir</span><span class="p">,</span> <span class="s2">&quot;PIC24F&quot;</span><span class="p">,</span> <span class="s2">&quot;gld&quot;</span><span class="p">)</span>
+<span class="n">convertDir</span><span class="p">(</span><span class="n">tdir</span><span class="p">,</span> <span class="n">dstdir</span><span class="p">,</span> <span class="s2">&quot;PIC24F&quot;</span><span class="p">)</span>
+
+<span class="n">tdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">C30_homedir</span><span class="p">,</span> <span class="s2">&quot;PIC24E&quot;</span><span class="p">,</span> <span class="s2">&quot;gld&quot;</span><span class="p">)</span>
+<span class="n">convertDir</span><span class="p">(</span><span class="n">tdir</span><span class="p">,</span> <span class="n">dstdir</span><span class="p">,</span> <span class="s2">&quot;PIC24E&quot;</span><span class="p">)</span>
+
+<span class="n">tdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">C30_homedir</span><span class="p">,</span> <span class="s2">&quot;dsPIC33F&quot;</span><span class="p">,</span> <span class="s2">&quot;gld&quot;</span><span class="p">)</span>
+<span class="n">convertDir</span><span class="p">(</span><span class="n">tdir</span><span class="p">,</span> <span class="n">dstdir</span><span class="p">,</span> <span class="s2">&quot;dsPIC33F&quot;</span><span class="p">)</span>
+
+<span class="n">tdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">C30_homedir</span><span class="p">,</span> <span class="s2">&quot;dsPIC33E&quot;</span><span class="p">,</span> <span class="s2">&quot;gld&quot;</span><span class="p">)</span>
+<span class="n">convertDir</span><span class="p">(</span><span class="n">tdir</span><span class="p">,</span> <span class="n">dstdir</span><span class="p">,</span> <span class="s2">&quot;dsPIC33E&quot;</span><span class="p">)</span>
+
+
+
+<span class="c1">#parseGldFile(sys.argv[1])</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../../contents.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">convert_gld.py</a><ul>
+<li><a class="reference internal" href="#imports">Imports</a><ul>
+<li><a class="reference internal" href="#standard-library">Standard library</a></li>
+<li><a class="reference internal" href="#third-party-imports">Third-party imports</a></li>
+<li><a class="reference internal" href="#local-application-imports">Local application imports</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../contents.html">Documentation overview</a><ul>
+  <li><a href="../../../utilities.html">Utilities</a><ul>
+      <li>Previous: <a href="../pic24_uart-small.h.html" title="previous chapter">pic24_uart-small.h - Headers for bare minimum UART functionality for the bootloader.</a></li>
+      <li>Next: <a href="../../../templates/data_sheet_to_csv.py.html" title="next chapter">data_sheet_to_csv.py - GUI to assist in translating Microchip data sheets to pin mappings</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../../_sources/bootloader/pic24_dspic33_bootloader.X/lkr/convert_gld.py"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="../../../_sources/bootloader/pic24_dspic33_bootloader.X/lkr/convert_gld.py"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

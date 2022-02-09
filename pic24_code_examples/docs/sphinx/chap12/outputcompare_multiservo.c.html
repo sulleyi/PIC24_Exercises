@@ -1,0 +1,252 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>outcompare_multiservo.c - Demonstrates pulse width modulation using four digital outputs and the OC1 module to create four PWM outputs for hobby servos. &#8212; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 6-May-2015 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/CodeChat.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '6-May-2015',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: ''
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="ledpwm.c - Demonstrates pulse width modulation by controlling the intensity of an LED. The ADC input value on AN0 is used to vary the PWM period." href="ledpwm.c.html" />
+    <link rel="prev" title="outputcompare_oneservo.c - Demonstrates servo control using output compare for PWM. Pulse width is set by the ADC input." href="outputcompare_oneservo.c.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <script type="text/javascript">document.addEventListener("DOMContentLoaded", function(event) {let walk_tree = function(elements,func_walk,func_child) {let walk_children = [];for (let index = 0; index < elements.length; ++index) {let that = elements[index];while (that && !func_walk(that)) {that = that.parentElement;}if (that) {that = func_walk(that);walk_children.push(that);while (that && func_child(that)) {that = func_child(that);walk_children.push(that);}}}return walk_children;};let code = document.getElementsByClassName("fenced-code");walk_tree(code, x => x.nextElementSibling, x => x.firstElementChild).map(x => {x.style.marginTop = 0;x.style.paddingTop = 0;});walk_tree(code, x => x.previousElementSibling, x => x.lastElementChild).map(x => {x.style.marginBottom = 0;x.style.paddingBottom = 0;});});</script><div class="section" id="outcompare-multiservo-c-demonstrates-pulse-width-modulation-using-four-digital-outputs-and-the-oc1-module-to-create-four-pwm-outputs-for-hobby-servos">
+<h1>outcompare_multiservo.c - Demonstrates pulse width modulation using four digital outputs and the OC1 module to create four PWM outputs for hobby servos.<a class="headerlink" href="#outcompare-multiservo-c-demonstrates-pulse-width-modulation-using-four-digital-outputs-and-the-oc1-module-to-create-four-pwm-outputs-for-hobby-servos" title="Permalink to this headline">¶</a></h1>
+<p>Demonstrates pulse width modulation using four digital outputs
+and the OC1 module to create four PWM outputs for hobby servos.
+A table is used to control the pulse widths of the four servos.</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&quot;pic24_all.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+
+<span class="cp">#define PWM_PERIOD 20000   </span><span class="c1">//in microseconds</span>
+
+<span class="kt">void</span>  <span class="nf">configTimer2</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">T2CON</span> <span class="o">=</span> <span class="n">T2_OFF</span> <span class="o">|</span> <span class="n">T2_IDLE_CON</span> <span class="o">|</span> <span class="n">T2_GATE_OFF</span>
+          <span class="o">|</span> <span class="n">T2_32BIT_MODE_OFF</span>
+          <span class="o">|</span> <span class="n">T2_SOURCE_INT</span>
+          <span class="o">|</span> <span class="n">T2_PS_1_256</span> <span class="p">;</span>  <span class="c1">//1 tick = 1.6 us at FCY=40 MHz</span>
+  <span class="n">PR2</span> <span class="o">=</span> <span class="n">usToU16Ticks</span><span class="p">(</span><span class="n">PWM_PERIOD</span><span class="p">,</span> <span class="n">getTimerPrescale</span><span class="p">(</span><span class="n">T2CONbits</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="n">TMR2</span>  <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>       <span class="c1">//clear timer2 value</span>
+<span class="p">}</span>
+
+<span class="c1">//just pick four digital outputs</span>
+<span class="cp">#define NUM_SERVOS 4</span>
+<span class="cp">#define SERVO0  _LATB2</span>
+<span class="cp">#define SERVO1  _LATB3</span>
+<span class="cp">#define SERVO2  _LATB13</span>
+<span class="cp">#define SERVO3  _LATB14</span>
+
+<span class="cp">#define MIN_PW  600            </span><span class="c1">//minimum pulse width, in us</span>
+<span class="cp">#define MAX_PW 2400            </span><span class="c1">//minimum pulse width, in us</span>
+<span class="cp">#define SLOT_WIDTH 2800        </span><span class="c1">//slot width, in us</span>
+
+<span class="k">volatile</span> <span class="kt">uint16_t</span> <span class="n">au16_servoPWidths</span><span class="p">[</span><span class="n">NUM_SERVOS</span><span class="p">];</span>
+<span class="k">volatile</span> <span class="kt">uint8_t</span> <span class="n">u8_currentServo</span> <span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+<span class="k">volatile</span> <span class="kt">uint8_t</span> <span class="n">u8_servoEdge</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>  <span class="c1">//1 = RISING, 0 = FALLING</span>
+<span class="k">volatile</span> <span class="kt">uint16_t</span> <span class="n">u16_slotWidthTicks</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="kt">void</span> <span class="nf">initServos</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">uint8_t</span> <span class="n">u8_i</span><span class="p">;</span>
+  <span class="kt">uint16_t</span> <span class="n">u16_initPW</span><span class="p">;</span>
+
+  <span class="n">u8_currentServo</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">CONFIG_RB2_AS_DIG_OUTPUT</span><span class="p">();</span>
+  <span class="n">CONFIG_RB3_AS_DIG_OUTPUT</span><span class="p">();</span>
+  <span class="n">CONFIG_RB13_AS_DIG_OUTPUT</span><span class="p">();</span>
+  <span class="n">CONFIG_RB14_AS_DIG_OUTPUT</span><span class="p">();</span>
+  <span class="n">u16_initPW</span> <span class="o">=</span> <span class="n">usToU16Ticks</span><span class="p">(</span><span class="n">MIN_PW</span> <span class="o">+</span> <span class="p">(</span><span class="n">MAX_PW</span><span class="o">-</span><span class="n">MIN_PW</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">getTimerPrescale</span><span class="p">(</span><span class="n">T2CONbits</span><span class="p">));</span>
+
+  <span class="c1">//config all servos for half maximum pulse width</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u8_i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">&lt;</span><span class="n">NUM_SERVOS</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">++</span><span class="p">)</span> <span class="n">au16_servoPWidths</span><span class="p">[</span><span class="n">u8_i</span><span class="p">]</span><span class="o">=</span><span class="n">u16_initPW</span><span class="p">;</span>
+  <span class="n">SERVO0</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">//all servo outputs low initially</span>
+  <span class="n">SERVO1</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">SERVO2</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">SERVO3</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>  <span class="c1">//outputs initially low</span>
+  <span class="n">u16_slotWidthTicks</span> <span class="o">=</span> <span class="n">usToU16Ticks</span><span class="p">(</span><span class="n">SLOT_WIDTH</span><span class="p">,</span> <span class="n">getTimerPrescale</span><span class="p">(</span><span class="n">T2CONbits</span><span class="p">));</span>
+<span class="p">}</span>
+
+
+
+<span class="kt">void</span> <span class="nf">setServoOutput</span> <span class="p">(</span><span class="kt">uint8_t</span> <span class="n">u8_servo</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="n">u8_val</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">switch</span> <span class="p">(</span><span class="n">u8_servo</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">case</span> <span class="mi">0</span><span class="o">:</span>
+      <span class="n">SERVO0</span> <span class="o">=</span> <span class="n">u8_val</span><span class="p">;</span>
+      <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="mi">1</span><span class="o">:</span>
+      <span class="n">SERVO1</span> <span class="o">=</span> <span class="n">u8_val</span><span class="p">;</span>
+      <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="mi">2</span><span class="o">:</span>
+      <span class="n">SERVO2</span> <span class="o">=</span> <span class="n">u8_val</span><span class="p">;</span>
+      <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="mi">3</span><span class="o">:</span>
+      <span class="n">SERVO3</span> <span class="o">=</span> <span class="n">u8_val</span><span class="p">;</span>
+      <span class="k">break</span><span class="p">;</span>
+    <span class="k">default</span><span class="o">:</span>
+      <span class="k">break</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">_ISR</span> <span class="nf">_OC1Interrupt</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">_OC1IF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="c1">//change the servo&#39;s value</span>
+  <span class="n">setServoOutput</span><span class="p">(</span><span class="n">u8_currentServo</span><span class="p">,</span> <span class="n">u8_servoEdge</span><span class="p">);</span>
+<span class="c1">//schedule next interrupt</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">u8_servoEdge</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>  <span class="c1">//rising edge</span>
+    <span class="c1">//next interrupt occurs after pulse width has elapsed</span>
+    <span class="n">OC1R</span> <span class="o">=</span> <span class="n">OC1R</span> <span class="o">+</span> <span class="n">au16_servoPWidths</span><span class="p">[</span><span class="n">u8_currentServo</span><span class="p">];</span>
+    <span class="n">u8_servoEdge</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>     <span class="c1">//change to falling edge</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="c1">//falling edge</span>
+    <span class="c1">//next interrupt occurs at beginning of next slot</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">u8_currentServo</span> <span class="o">!=</span> <span class="n">NUM_SERVOS</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+      <span class="n">OC1R</span> <span class="o">=</span> <span class="n">u16_slotWidthTicks</span><span class="o">*</span><span class="p">(</span><span class="n">u8_currentServo</span><span class="o">+</span><span class="mi">1</span><span class="p">);</span>
+    <span class="k">else</span> <span class="c1">//last servo!</span>
+      <span class="n">OC1R</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">u8_servoEdge</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>     <span class="c1">//change to rising edge</span>
+    <span class="n">u8_currentServo</span><span class="o">++</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">u8_currentServo</span> <span class="o">==</span> <span class="n">NUM_SERVOS</span><span class="p">)</span> <span class="n">u8_currentServo</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+
+<span class="kt">void</span> <span class="nf">configOutputCapture1</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">T2CONbits</span><span class="p">.</span><span class="n">TON</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>       <span class="c1">//disable Timer when configuring Output compare</span>
+  <span class="n">OC1R</span>  <span class="o">=</span>  <span class="mi">0</span><span class="p">;</span>  <span class="c1">//initialize to 0</span>
+<span class="c1">//turn on the compare toggle mode using Timer2</span>
+<span class="cp">#ifdef OC1CON1</span>
+  <span class="n">OC1CON1</span> <span class="o">=</span> <span class="n">OC_TIMER2_SRC</span> <span class="o">|</span>      <span class="c1">//Timer2 source</span>
+            <span class="n">OC_TOGGLE_PULSE</span><span class="p">;</span>     <span class="c1">//single compare toggle, just care about compare event</span>
+  <span class="n">OC1CON2</span> <span class="o">=</span> <span class="n">OC_SYNCSEL_TIMER2</span><span class="p">;</span>   <span class="c1">//synchronize to timer2</span>
+<span class="cp">#else</span>
+  <span class="n">OC1CON</span> <span class="o">=</span> <span class="n">OC_TIMER2_SRC</span> <span class="o">|</span>      <span class="c1">//Timer2 source</span>
+           <span class="n">OC_TOGGLE_PULSE</span><span class="p">;</span>     <span class="c1">//single compare toggle, just care about compare event</span>
+<span class="cp">#endif</span>
+  <span class="n">_OC1IF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">_OC1IP</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="n">_OC1IE</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>    <span class="c1">//enable the OC1 interrupt</span>
+<span class="p">}</span>
+
+
+<span class="kt">char</span> <span class="n">sz_buf</span><span class="p">[</span><span class="mi">32</span><span class="p">];</span>
+
+<span class="kt">void</span> <span class="nf">getServoValue</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">int16_t</span> <span class="n">u16_servo</span><span class="p">;</span>
+  <span class="kt">int16_t</span> <span class="n">u16_pw</span><span class="p">;</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Choose servo (1,2,3,4): &quot;</span><span class="p">);</span>
+  <span class="n">inStringEcho</span><span class="p">(</span><span class="n">sz_buf</span><span class="p">,</span><span class="mi">31</span><span class="p">);</span>
+  <span class="n">sscanf</span><span class="p">(</span><span class="n">sz_buf</span><span class="p">,</span><span class="s">&quot;%d&quot;</span><span class="p">,(</span><span class="kt">int</span> <span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">u16_servo</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">((</span><span class="n">u16_servo</span> <span class="o">&gt;</span> <span class="mi">4</span><span class="p">)</span> <span class="o">||</span> <span class="p">(</span><span class="n">u16_servo</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">))</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Invalid servo..</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="k">return</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Enter pulse width (min 600, max 2400): &quot;</span><span class="p">);</span>
+  <span class="n">inStringEcho</span><span class="p">(</span><span class="n">sz_buf</span><span class="p">,</span><span class="mi">31</span><span class="p">);</span>
+  <span class="n">sscanf</span><span class="p">(</span><span class="n">sz_buf</span><span class="p">,</span><span class="s">&quot;%d&quot;</span><span class="p">,(</span><span class="kt">int</span> <span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">u16_pw</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">((</span><span class="n">u16_pw</span> <span class="o">&gt;</span> <span class="mi">2400</span><span class="p">)</span> <span class="o">||</span> <span class="p">(</span><span class="n">u16_pw</span> <span class="o">&lt;</span> <span class="mi">600</span><span class="p">))</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Invalid pulse width..</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="k">return</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="c1">//set the pulse width</span>
+  <span class="n">_OC1IE</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">//disable the interrupt while changing</span>
+  <span class="n">au16_servoPWidths</span><span class="p">[</span><span class="n">u16_servo</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">=</span><span class="n">usToU16Ticks</span><span class="p">(</span><span class="n">u16_pw</span><span class="p">,</span> <span class="n">getTimerPrescale</span><span class="p">(</span><span class="n">T2CONbits</span><span class="p">));</span>
+  <span class="n">_OC1IE</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">configBasic</span><span class="p">(</span><span class="n">HELLO_MSG</span><span class="p">);</span>
+  <span class="n">configTimer2</span><span class="p">();</span>
+  <span class="n">initServos</span><span class="p">();</span>
+  <span class="n">configOutputCapture1</span><span class="p">();</span>
+  <span class="n">T2CONbits</span><span class="p">.</span><span class="n">TON</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>       <span class="c1">//turn on Timer2 to start PWM</span>
+
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">getServoValue</span><span class="p">();</span>       <span class="c1">//prints menu, gets new servo value from console.</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../contents.html">Documentation overview</a><ul>
+  <li><a href="../textbook_examples.html">Textbook examples</a><ul>
+      <li>Previous: <a href="outputcompare_oneservo.c.html" title="previous chapter">outputcompare_oneservo.c - Demonstrates servo control using output compare for PWM. Pulse width is set by the ADC input.</a></li>
+      <li>Next: <a href="ledpwm.c.html" title="next chapter">ledpwm.c - Demonstrates pulse width modulation by controlling the intensity of an LED. The ADC input value on AN0 is used to vary the PWM period.</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/chap12/outputcompare_multiservo.c"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="../_sources/chap12/outputcompare_multiservo.c"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,338 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>ecan_example_fifo.c - Illustrate CAN transmit, receive &#8212; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 6-May-2015 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/CodeChat.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '6-May-2015',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: ''
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="ecan_example_fifo_eid.c - Illustrate CAN transmit, receive" href="ecan_example_fifo_eid.c.html" />
+    <link rel="prev" title="ecan_example_nofifo.c - Illustrate CAN transmit, receive" href="ecan_example_nofifo.c.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <script type="text/javascript">document.addEventListener("DOMContentLoaded", function(event) {let walk_tree = function(elements,func_walk,func_child) {let walk_children = [];for (let index = 0; index < elements.length; ++index) {let that = elements[index];while (that && !func_walk(that)) {that = that.parentElement;}if (that) {that = func_walk(that);walk_children.push(that);while (that && func_child(that)) {that = func_child(that);walk_children.push(that);}}}return walk_children;};let code = document.getElementsByClassName("fenced-code");walk_tree(code, x => x.nextElementSibling, x => x.firstElementChild).map(x => {x.style.marginTop = 0;x.style.paddingTop = 0;});walk_tree(code, x => x.previousElementSibling, x => x.lastElementChild).map(x => {x.style.marginBottom = 0;x.style.paddingBottom = 0;});});</script><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="c1">/// .. &quot;Copyright (c) 2008 Robert B. Reese, Bryan A. Jones, J. W. Bruce (&quot;AUTHORS&quot;)&quot;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p>All rights reserved.
+(R. Reese, reese_AT_ece.msstate.edu, Mississippi State University)
+(B. A. Jones, bjones_AT_ece.msstate.edu, Mississippi State University)
+(J. W. Bruce, jwbruce_AT_ece.msstate.edu, Mississippi State University)</p>
+<p>Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose, without fee, and without written agreement is
+hereby granted, provided that the above copyright notice, the following
+two paragraphs and the authors appear in all copies of this software.</p>
+<p>IN NO EVENT SHALL THE “AUTHORS” BE LIABLE TO ANY PARTY FOR
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT
+OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE “AUTHORS”
+HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+<p>THE “AUTHORS” SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
+ON AN “AS IS” BASIS, AND THE “AUTHORS” HAS NO OBLIGATION TO
+PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.”</p>
+<p>Please maintain this header in its entirety when copying/modifying
+these files.</p>
+</div></blockquote>
+<div class="section" id="ecan-example-fifo-c-illustrate-can-transmit-receive">
+<h1>ecan_example_fifo.c - Illustrate CAN transmit, receive<a class="headerlink" href="#ecan-example-fifo-c-illustrate-can-transmit-receive" title="Permalink to this headline">¶</a></h1>
+<p>Uses a FIFO for RX receive, and
+uses a standard data frame.</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span> 
+<span class="cp">#include</span> <span class="cpf">&quot;pic24_all.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+
+<span class="cp">#define NUM_TX_BUFS  1   </span><span class="c1">//reserve 1 for TX</span>
+<span class="cp">#define NUM_BUFS    8   </span><span class="c1">//make this a power of 2 for the alignment to work or enter alignment manually</span>
+
+<span class="c1">//base message ID</span>
+<span class="cp">#define MSG_ID 0x7A0    </span><span class="c1">//arbitrary choice for 11-bit messsage ID</span>
+
+<span class="cp">#if defined(__PIC24H__) || defined (__dsPIC33F__)</span>
+<span class="n">ECANMSG</span> <span class="n">msgBuf</span><span class="p">[</span><span class="n">NUM_BUFS</span><span class="p">]</span> <span class="n">__attribute__</span><span class="p">((</span><span class="n">space</span><span class="p">(</span><span class="n">dma</span><span class="p">),</span><span class="n">aligned</span><span class="p">(</span><span class="n">NUM_BUFS</span><span class="o">*</span><span class="mi">16</span><span class="p">)));</span>
+
+<span class="c1">//configure DMA transmit buffer</span>
+<span class="kt">void</span> <span class="nf">configDMA0</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">DMACS0</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">_DMA0IF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">DMA0PAD</span> <span class="o">=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">C1TXD</span><span class="p">;</span>
+  <span class="n">DMA0REQ</span> <span class="o">=</span> <span class="n">DMA_IRQ_ECAN1TX</span><span class="p">;</span>
+  <span class="n">DMA0STA</span> <span class="o">=</span> <span class="n">__builtin_dmaoffset</span><span class="p">(</span><span class="n">msgBuf</span><span class="p">);</span>
+  <span class="n">DMA0CNT</span> <span class="o">=</span>   <span class="k">sizeof</span><span class="p">(</span><span class="n">ECANMSG</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>  <span class="c1">// == 7</span>
+  <span class="n">DMA0CON</span> <span class="o">=</span>   <span class="c1">//configure and enable the module Module</span>
+    <span class="p">(</span><span class="n">DMA_MODULE_ON</span> <span class="o">|</span>
+     <span class="n">DMA_SIZE_WORD</span> <span class="o">|</span>
+     <span class="n">DMA_DIR_WRITE_PERIPHERAL</span> <span class="o">|</span>
+     <span class="n">DMA_INTERRUPT_FULL</span> <span class="o">|</span>
+     <span class="n">DMA_NULLW_OFF</span> <span class="o">|</span>
+     <span class="n">DMA_AMODE_PERIPHERAL_INDIRECT</span> <span class="o">|</span>
+     <span class="n">DMA_MODE_CONTINUOUS</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">//configure DMA receive buffer</span>
+<span class="kt">void</span> <span class="nf">configDMA1</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">_DMA1IF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">DMA1PAD</span> <span class="o">=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">C1RXD</span><span class="p">;</span>
+  <span class="n">DMA1REQ</span> <span class="o">=</span> <span class="n">DMA_IRQ_ECAN1RX</span><span class="p">;</span>
+  <span class="n">DMA1STA</span> <span class="o">=</span> <span class="n">__builtin_dmaoffset</span><span class="p">(</span><span class="n">msgBuf</span><span class="p">);</span>
+  <span class="n">DMA1CNT</span> <span class="o">=</span>  <span class="k">sizeof</span><span class="p">(</span><span class="n">ECANMSG</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>  <span class="c1">// == 7</span>
+  <span class="n">DMA1CON</span> <span class="o">=</span>   <span class="c1">//configure and enable the module Module</span>
+    <span class="p">(</span><span class="n">DMA_MODULE_ON</span> <span class="o">|</span>
+     <span class="n">DMA_SIZE_WORD</span> <span class="o">|</span>
+     <span class="n">DMA_DIR_READ_PERIPHERAL</span> <span class="o">|</span>
+     <span class="n">DMA_INTERRUPT_FULL</span> <span class="o">|</span>
+     <span class="n">DMA_NULLW_OFF</span> <span class="o">|</span>
+     <span class="n">DMA_AMODE_PERIPHERAL_INDIRECT</span> <span class="o">|</span>
+     <span class="n">DMA_MODE_CONTINUOUS</span><span class="p">);</span>
+
+<span class="p">}</span>
+<span class="cp">#elif defined(__dsPIC33EP512GP806__)</span>
+</pre></div>
+</div>
+<p>dsPIC33EP512GP806 must be handled differently than the rest of the family
+due to errata in the DMA subsystem (see document DS80000526E - silicon issue
+15). DPRAM must be used to ensure that the DMA cannot be held in the “OFF”
+state by the system arbiter. [Ryan Taylor; November 2015]</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span> 
+<span class="n">__eds__</span> <span class="n">ECANMSG</span> <span class="n">msgBuf</span><span class="p">[</span><span class="n">NUM_BUFS</span><span class="p">]</span> <span class="n">__attribute__</span><span class="p">((</span><span class="n">space</span><span class="p">(</span><span class="n">dma</span><span class="p">),</span><span class="n">aligned</span><span class="p">(</span><span class="n">NUM_BUFS</span><span class="o">*</span><span class="mi">16</span><span class="p">),</span><span class="n">eds</span><span class="p">));</span>
+
+<span class="c1">//configure DMA transmit buffer</span>
+<span class="kt">void</span> <span class="nf">configDMA0</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">DMAPWC</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">// Reset the DMA Peripheral Write Collision Status Register</span>
+  <span class="n">_DMA0IF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">DMA0PAD</span> <span class="o">=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">C1TXD</span><span class="p">;</span>
+  <span class="n">DMA0REQ</span> <span class="o">=</span> <span class="n">DMA_IRQ_ECAN1TX</span><span class="p">;</span>
+  <span class="n">DMA0STAL</span> <span class="o">=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span> <span class="kt">int</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">msgBuf</span><span class="p">;</span>
+  <span class="n">DMA0STAH</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">DMA0CNT</span> <span class="o">=</span>   <span class="k">sizeof</span><span class="p">(</span><span class="n">ECANMSG</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>  <span class="c1">// == 7</span>
+  <span class="n">DMA0CON</span> <span class="o">=</span>   <span class="c1">//configure and enable the module Module</span>
+    <span class="p">(</span><span class="n">DMA_MODULE_ON</span> <span class="o">|</span>
+     <span class="n">DMA_SIZE_WORD</span> <span class="o">|</span>
+     <span class="n">DMA_DIR_WRITE_PERIPHERAL</span> <span class="o">|</span>
+     <span class="n">DMA_INTERRUPT_FULL</span> <span class="o">|</span>
+     <span class="n">DMA_NULLW_OFF</span> <span class="o">|</span>
+     <span class="n">DMA_AMODE_PERIPHERAL_INDIRECT</span> <span class="o">|</span>
+     <span class="n">DMA_MODE_CONTINUOUS</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">//configure DMA receive buffer</span>
+<span class="kt">void</span> <span class="nf">configDMA1</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">_DMA1IF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">DMA1PAD</span> <span class="o">=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">C1RXD</span><span class="p">;</span>
+  <span class="n">DMA1REQ</span> <span class="o">=</span> <span class="n">DMA_IRQ_ECAN1RX</span><span class="p">;</span>
+  <span class="n">DMA1STAL</span> <span class="o">=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span> <span class="kt">int</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">msgBuf</span><span class="p">;</span>
+  <span class="n">DMA1STAH</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">DMA1CNT</span> <span class="o">=</span>  <span class="k">sizeof</span><span class="p">(</span><span class="n">ECANMSG</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>  <span class="c1">// == 7</span>
+  <span class="n">DMA1CON</span> <span class="o">=</span>   <span class="c1">//configure and enable the module Module</span>
+    <span class="p">(</span><span class="n">DMA_MODULE_ON</span> <span class="o">|</span>
+     <span class="n">DMA_SIZE_WORD</span> <span class="o">|</span>
+     <span class="n">DMA_DIR_READ_PERIPHERAL</span> <span class="o">|</span>
+     <span class="n">DMA_INTERRUPT_FULL</span> <span class="o">|</span>
+     <span class="n">DMA_NULLW_OFF</span> <span class="o">|</span>
+     <span class="n">DMA_AMODE_PERIPHERAL_INDIRECT</span> <span class="o">|</span>
+     <span class="n">DMA_MODE_CONTINUOUS</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="cp">#elif defined(__dsPIC33E__)</span>
+
+<span class="n">ECANMSG</span> <span class="n">msgBuf</span><span class="p">[</span><span class="n">NUM_BUFS</span><span class="p">]</span> <span class="n">__attribute__</span><span class="p">((</span><span class="n">space</span><span class="p">(</span><span class="n">xmemory</span><span class="p">),</span><span class="n">aligned</span><span class="p">(</span><span class="n">NUM_BUFS</span><span class="o">*</span><span class="mi">16</span><span class="p">)));</span>
+
+<span class="c1">//configure DMA transmit buffer</span>
+<span class="kt">void</span> <span class="nf">configDMA0</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">DMAPWC</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">// Reset the DMA Peripheral Write Collision Status Register</span>
+  <span class="n">_DMA0IF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">DMA0PAD</span> <span class="o">=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">C1TXD</span><span class="p">;</span>
+  <span class="n">DMA0REQ</span> <span class="o">=</span> <span class="n">DMA_IRQ_ECAN1TX</span><span class="p">;</span>
+  <span class="n">DMA0STAL</span> <span class="o">=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">msgBuf</span><span class="p">;</span>
+  <span class="n">DMA0STAH</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">DMA0CNT</span> <span class="o">=</span>   <span class="k">sizeof</span><span class="p">(</span><span class="n">ECANMSG</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>  <span class="c1">// == 7</span>
+  <span class="n">DMA0CON</span> <span class="o">=</span>   <span class="c1">//configure and enable the module Module</span>
+    <span class="p">(</span><span class="n">DMA_MODULE_ON</span> <span class="o">|</span>
+     <span class="n">DMA_SIZE_WORD</span> <span class="o">|</span>
+     <span class="n">DMA_DIR_WRITE_PERIPHERAL</span> <span class="o">|</span>
+     <span class="n">DMA_INTERRUPT_FULL</span> <span class="o">|</span>
+     <span class="n">DMA_NULLW_OFF</span> <span class="o">|</span>
+     <span class="n">DMA_AMODE_PERIPHERAL_INDIRECT</span> <span class="o">|</span>
+     <span class="n">DMA_MODE_CONTINUOUS</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">//configure DMA receive buffer</span>
+<span class="kt">void</span> <span class="nf">configDMA1</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">_DMA1IF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">DMA1PAD</span> <span class="o">=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">C1RXD</span><span class="p">;</span>
+  <span class="n">DMA1REQ</span> <span class="o">=</span> <span class="n">DMA_IRQ_ECAN1RX</span><span class="p">;</span>
+  <span class="n">DMA1STAL</span> <span class="o">=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">msgBuf</span><span class="p">;</span>
+  <span class="n">DMA1STAH</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">DMA1CNT</span> <span class="o">=</span>  <span class="k">sizeof</span><span class="p">(</span><span class="n">ECANMSG</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>  <span class="c1">// == 7</span>
+  <span class="n">DMA1CON</span> <span class="o">=</span>   <span class="c1">//configure and enable the module Module</span>
+    <span class="p">(</span><span class="n">DMA_MODULE_ON</span> <span class="o">|</span>
+     <span class="n">DMA_SIZE_WORD</span> <span class="o">|</span>
+     <span class="n">DMA_DIR_READ_PERIPHERAL</span> <span class="o">|</span>
+     <span class="n">DMA_INTERRUPT_FULL</span> <span class="o">|</span>
+     <span class="n">DMA_NULLW_OFF</span> <span class="o">|</span>
+     <span class="n">DMA_AMODE_PERIPHERAL_INDIRECT</span> <span class="o">|</span>
+     <span class="n">DMA_MODE_CONTINUOUS</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="cp">#else</span>
+<span class="cp">#error &quot;Configure DMA for your chip here.&quot;</span>
+<span class="cp">#endif</span>
+
+<span class="cp">#define RX_BUFFER_ID  15  </span><span class="c1">//a value of 15 means to use a FIFO for RX</span>
+
+<span class="kt">void</span> <span class="nf">configECAN1</span><span class="p">()</span> <span class="p">{</span>
+  <span class="kt">uint8_t</span> <span class="n">u8_i</span><span class="p">;</span>
+  <span class="n">CHANGE_MODE_ECAN1</span><span class="p">(</span><span class="n">ECAN_MODE_CONFIGURE</span><span class="p">);</span>
+  <span class="n">configBaudECAN1</span><span class="p">();</span>
+  <span class="n">C1FCTRL</span> <span class="o">=</span> <span class="n">ECAN_FIFO_START_AREA_1</span> <span class="o">|</span> <span class="n">ECAN_DMA_BUF_SIZE_8</span> <span class="p">;</span>
+<span class="c1">//use Filter 0 with Mask 0</span>
+  <span class="n">configRxFilterECAN1</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">MSG_ID</span><span class="p">,</span> <span class="n">ECAN_MATCH_SID</span><span class="p">,</span> <span class="n">RX_BUFFER_ID</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">configRxMaskECAN1</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mh">0x7FC</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>  <span class="c1">//check all but last two bits</span>
+  <span class="n">clrRxFullOvfFlagsECAN1</span><span class="p">();</span>  <span class="c1">//clear all RX full, overflow flags.</span>
+
+<span class="c1">//first 8 buffs must be configured as either TX or TX</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u8_i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">u8_i</span> <span class="o">&lt;</span> <span class="n">NUM_TX_BUFS</span><span class="p">)</span>
+      <span class="n">configTxRxBufferECAN1</span><span class="p">(</span><span class="n">u8_i</span><span class="p">,</span><span class="n">ECAN_TX_BUFF</span><span class="p">,</span><span class="mi">3</span><span class="p">);</span>
+    <span class="k">else</span>
+      <span class="n">configTxRxBufferECAN1</span><span class="p">(</span><span class="n">u8_i</span><span class="p">,</span><span class="n">ECAN_RX_BUFF</span><span class="p">,</span><span class="mi">3</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="n">configDMA0</span><span class="p">();</span>    <span class="c1">//do DMA config after ECAN has been initialized</span>
+  <span class="n">configDMA1</span><span class="p">();</span>
+  <span class="n">CHANGE_MODE_ECAN1</span><span class="p">(</span><span class="n">ECAN_MODE_NORMAL</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">uint32_t</span> <span class="nf">rrot32</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">u32_x</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">u32_x</span> <span class="o">&amp;</span> <span class="mh">0x1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">u32_x</span> <span class="o">=</span> <span class="n">u32_x</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="n">u32_x</span> <span class="o">=</span> <span class="n">u32_x</span> <span class="o">|</span> <span class="mh">0x80000000</span><span class="p">;</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="n">u32_x</span> <span class="o">=</span> <span class="n">u32_x</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="k">return</span> <span class="n">u32_x</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">uint32_t</span> <span class="n">u32_out0</span><span class="p">,</span> <span class="n">u32_out1</span><span class="p">,</span> <span class="n">u32_in0</span><span class="p">,</span> <span class="n">u32_in1</span><span class="p">;</span>
+  <span class="kt">uint8_t</span> <span class="n">rx_buff_id</span><span class="p">,</span> <span class="n">u8_cnt</span><span class="p">;</span>
+  <span class="n">configBasic</span><span class="p">(</span><span class="n">HELLO_MSG</span><span class="p">);</span>
+  <span class="n">configECAN1</span><span class="p">();</span>
+  <span class="n">CHANGE_MODE_ECAN1</span><span class="p">(</span><span class="n">ECAN_MODE_LOOPBACK</span><span class="p">);</span>  <span class="c1">//loopback to ourself for a test.</span>
+  <span class="n">u32_out0</span> <span class="o">=</span> <span class="mh">0xFEDCBA98</span><span class="p">;</span>
+  <span class="n">u32_out1</span> <span class="o">=</span> <span class="mh">0x76543210</span><span class="p">;</span>
+  <span class="n">u8_cnt</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">DELAY_MS</span><span class="p">(</span><span class="mi">500</span><span class="p">);</span>
+    <span class="n">msgBuf</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">data</span><span class="p">.</span><span class="n">u32</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">u32_out0</span><span class="p">;</span> <span class="c1">//save in CAN message</span>
+    <span class="n">msgBuf</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">data</span><span class="p">.</span><span class="n">u32</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">u32_out1</span><span class="p">;</span>
+    <span class="c1">//format Buffer 0 for TX with SID=MSG_ID, data length = 8 bytes</span>
+    <span class="n">formatStandardDataFrameECAN</span><span class="p">(</span><span class="o">&amp;</span><span class="n">msgBuf</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">MSG_ID</span><span class="o">+</span><span class="n">u8_cnt</span><span class="p">,</span> <span class="mi">8</span><span class="p">);</span>
+    <span class="n">startTxECAN1</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>  <span class="c1">//start transmission of buffer 0</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">getTxInProgressECAN1</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span> <span class="p">{</span>
+      <span class="n">doHeartbeat</span><span class="p">();</span> <span class="c1">//wait for transmission to end.</span>
+    <span class="p">}</span>
+    <span class="n">_DMA0IF</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="n">DELAY_MS</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>  <span class="c1">//delay for reception</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">_DMA1IF</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Message ID 0x%X rejected by acceptance filter.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">MSG_ID</span><span class="o">+</span><span class="n">u8_cnt</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="n">_DMA1IF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>   <span class="c1">//RX message accepted</span>
+      <span class="n">rx_buff_id</span> <span class="o">=</span> <span class="n">GET_FIFO_READBUFFER_ECAN1</span><span class="p">();</span>
+      <span class="n">u32_in0</span> <span class="o">=</span> <span class="n">msgBuf</span><span class="p">[</span><span class="n">rx_buff_id</span><span class="p">].</span><span class="n">data</span><span class="p">.</span><span class="n">u32</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+      <span class="n">u32_in1</span> <span class="o">=</span> <span class="n">msgBuf</span><span class="p">[</span><span class="n">rx_buff_id</span><span class="p">].</span><span class="n">data</span><span class="p">.</span><span class="n">u32</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+      <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Rx Buff: %d. Msg ID: 0x%X, Out: 0x%08lX%08lX, In: 0x%08lX%08lX</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+             <span class="n">rx_buff_id</span><span class="p">,</span> <span class="n">msgBuf</span><span class="p">[</span><span class="n">rx_buff_id</span><span class="p">].</span><span class="n">w0</span><span class="p">.</span><span class="n">SID</span><span class="p">,</span><span class="n">u32_out0</span><span class="p">,</span> <span class="n">u32_out1</span><span class="p">,</span> <span class="n">u32_in0</span><span class="p">,</span> <span class="n">u32_in1</span> <span class="p">);</span>
+      <span class="n">clrRxFullFlagECAN1</span><span class="p">(</span><span class="n">rx_buff_id</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">u32_out0</span> <span class="o">=</span> <span class="n">rrot32</span><span class="p">(</span><span class="n">u32_out0</span><span class="p">);</span>
+    <span class="n">u32_out1</span> <span class="o">=</span> <span class="n">rrot32</span><span class="p">(</span><span class="n">u32_out1</span><span class="p">);</span>
+    <span class="n">u8_cnt</span><span class="o">++</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">u8_cnt</span> <span class="o">==</span> <span class="mi">8</span><span class="p">)</span> <span class="n">u8_cnt</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="p">}</span><span class="c1">//end while</span>
+<span class="p">}</span><span class="c1">//end main</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../contents.html">Documentation overview</a><ul>
+  <li><a href="../textbook_examples.html">Textbook examples</a><ul>
+      <li>Previous: <a href="ecan_example_nofifo.c.html" title="previous chapter">ecan_example_nofifo.c - Illustrate CAN transmit, receive</a></li>
+      <li>Next: <a href="ecan_example_fifo_eid.c.html" title="next chapter">ecan_example_fifo_eid.c - Illustrate CAN transmit, receive</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/chap13/ecan_example_fifo.c"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="../_sources/chap13/ecan_example_fifo.c"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

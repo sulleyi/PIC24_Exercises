@@ -1,0 +1,137 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>SCons_esos.py - Build ESOS chapter 14 applications &#8212; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 6-May-2015 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/CodeChat.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '6-May-2015',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: ''
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="SCons_zipit.py - Build docs then create a .zip for distribution" href="SCons_zipit.py.html" />
+    <link rel="prev" title="SCons_build.py - Build all libraries and examples" href="SCons_build.py.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <script type="text/javascript">document.addEventListener("DOMContentLoaded", function(event) {let walk_tree = function(elements,func_walk,func_child) {let walk_children = [];for (let index = 0; index < elements.length; ++index) {let that = elements[index];while (that && !func_walk(that)) {that = that.parentElement;}if (that) {that = func_walk(that);walk_children.push(that);while (that && func_child(that)) {that = func_child(that);walk_children.push(that);}}}return walk_children;};let code = document.getElementsByClassName("fenced-code");walk_tree(code, x => x.nextElementSibling, x => x.firstElementChild).map(x => {x.style.marginTop = 0;x.style.paddingTop = 0;});walk_tree(code, x => x.previousElementSibling, x => x.lastElementChild).map(x => {x.style.marginBottom = 0;x.style.paddingBottom = 0;});});</script><div class="section" id="scons-esos-py-build-esos-chapter-14-applications">
+<h1>SCons_esos.py - Build ESOS chapter 14 applications<a class="headerlink" href="#scons-esos-py-build-esos-chapter-14-applications" title="Permalink to this headline">¶</a></h1>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="n">Import</span><span class="p">(</span><span class="s1">&#39;env bin2hex linker_side_effect&#39;</span><span class="p">)</span>
+
+<span class="c1">## Inform SCons about the dependencies in the template-based files</span>
+<span class="n">SConscript</span><span class="p">(</span><span class="s1">&#39;templates/SConscript.py&#39;</span><span class="p">,</span> <span class="s1">&#39;env&#39;</span><span class="p">)</span>
+
+<span class="c1">## Walk through each source file and build it</span>
+<span class="k">for</span> <span class="n">sourceFile</span> <span class="ow">in</span> <span class="n">Glob</span><span class="p">(</span><span class="s1">&#39;chap14/*.c&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="bp">True</span><span class="p">):</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>Compile the ESOS application.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>    <span class="n">p</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">Program</span><span class="p">(</span>
+      <span class="p">[</span> <span class="n">sourceFile</span><span class="p">,</span>
+        <span class="s1">&#39;lib/src/pic24_clockfreq.c&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;lib/src/pic24_configbits.c&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;lib/src/pic24_timer.c&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;lib/src/pic24_util.c&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;lib/src/pic24_serial.c&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;lib/src/pic24_uart.c&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;esos/src/esos.c&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;esos/src/esos_comm.c&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;esos/src/esos_cb.c&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;esos/src/esos_mail.c&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;esos/src/pic24/esos_pic24_i2c.c&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;esos/src/pic24/esos_pic24_irq.c&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;esos/src/pic24/esos_pic24_rs232.c&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;esos/src/pic24/esos_pic24_spi.c&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;esos/src/pic24/esos_pic24_tick.c&#39;</span><span class="p">,</span> <span class="p">])</span>
+    <span class="n">linker_side_effect</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>Convert it to a .hex</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>    <span class="n">bin2hex</span><span class="p">(</span><span class="n">sourceFile</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="s1">&#39;esos&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="contents.html">Documentation overview</a><ul>
+  <li><a href="utilities.html">Utilities</a><ul>
+  <li><a href="SConstruct.py.html">SConstruct.py - Build all libraries and examples over many chips</a><ul>
+      <li>Previous: <a href="SCons_build.py.html" title="previous chapter">SCons_build.py - Build all libraries and examples</a></li>
+      <li>Next: <a href="SCons_zipit.py.html" title="next chapter">SCons_zipit.py - Build docs then create a .zip for distribution</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/SCons_esos.py"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/SCons_esos.py"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

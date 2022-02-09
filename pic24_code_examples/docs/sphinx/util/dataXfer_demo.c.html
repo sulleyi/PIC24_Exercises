@@ -1,0 +1,162 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>dataXfer_demo.c - A simple demonstration of the data transfer protocol. &#8212; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 6-May-2015 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/CodeChat.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '6-May-2015',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: ''
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Utilities" href="../utilities.html" />
+    <link rel="prev" title="dataXfer_echo.c - Demonstrates an echo program which includes usage of the data transfer protocol" href="dataXfer_echo.c.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <script type="text/javascript">document.addEventListener("DOMContentLoaded", function(event) {let walk_tree = function(elements,func_walk,func_child) {let walk_children = [];for (let index = 0; index < elements.length; ++index) {let that = elements[index];while (that && !func_walk(that)) {that = that.parentElement;}if (that) {that = func_walk(that);walk_children.push(that);while (that && func_child(that)) {that = func_child(that);walk_children.push(that);}}}return walk_children;};let code = document.getElementsByClassName("fenced-code");walk_tree(code, x => x.nextElementSibling, x => x.firstElementChild).map(x => {x.style.marginTop = 0;x.style.paddingTop = 0;});walk_tree(code, x => x.previousElementSibling, x => x.lastElementChild).map(x => {x.style.marginBottom = 0;x.style.paddingBottom = 0;});});</script><div class="section" id="dataxfer-demo-c-a-simple-demonstration-of-the-data-transfer-protocol">
+<h1>dataXfer_demo.c - A simple demonstration of the data transfer protocol.<a class="headerlink" href="#dataxfer-demo-c-a-simple-demonstration-of-the-data-transfer-protocol" title="Permalink to this headline">¶</a></h1>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&quot;pic24_all.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&quot;dataXfer.h&quot;</span><span class="cp"></span>
+
+<span class="c1">/// Indexes of all the variables to be transferred.</span>
+<span class="k">enum</span> <span class="p">{</span> <span class="n">I16_VAL_NDX</span><span class="p">,</span> <span class="n">U16_INDEX_NDX</span><span class="p">,</span> <span class="n">C_NDX</span><span class="p">,</span> <span class="n">C1_NDX</span> <span class="p">};</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">int16_t</span> <span class="n">i16_val</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+  <span class="kt">char</span> <span class="n">c</span><span class="p">;</span>
+  <span class="kt">uint16_t</span> <span class="n">u16_index</span><span class="p">;</span>
+
+  <span class="n">configBasic</span><span class="p">(</span><span class="n">HELLO_MSG</span><span class="p">);</span>
+  <span class="n">initDataXfer</span><span class="p">();</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>All variables received by the PIC must be specified.</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>  <span class="n">SPECIFY_VAR</span><span class="p">(</span><span class="n">I16_VAL_NDX</span><span class="p">,</span> <span class="n">i16_val</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">,</span> <span class="s">&quot;%hi&quot;</span><span class="p">,</span> <span class="s">&quot;Current sum&quot;</span><span class="p">);</span>
+  <span class="n">SPECIFY_VAR</span><span class="p">(</span><span class="n">U16_INDEX_NDX</span><span class="p">,</span> <span class="n">u16_index</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span> <span class="s">&quot;%hu&quot;</span><span class="p">,</span> <span class="s">&quot;Index of received data&quot;</span><span class="p">);</span>
+  <span class="n">SPECIFY_VAR</span><span class="p">(</span><span class="n">C_NDX</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span> <span class="s">&quot;%c&quot;</span><span class="p">,</span> <span class="s">&quot;Character entered&quot;</span><span class="p">);</span>
+  <span class="n">SPECIFY_VAR</span><span class="p">(</span><span class="n">C1_NDX</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span> <span class="s">&quot;%hu&quot;</span><span class="p">,</span> <span class="s">&quot;Value of character entered&quot;</span><span class="p">);</span>
+
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">sendVar</span><span class="p">(</span><span class="n">I16_VAL_NDX</span><span class="p">);</span> <span class="c1">// Send i16_val to the PC</span>
+    <span class="n">outString</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">Current sum is &quot;</span><span class="p">);</span>
+    <span class="n">outUint16</span><span class="p">(</span><span class="n">i16_val</span><span class="p">);</span>
+    <span class="n">outString</span><span class="p">(</span><span class="s">&quot;. Enter digit to sum (0-9): &quot;</span><span class="p">);</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>Receive one character or variable.</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>    <span class="n">u16_index</span> <span class="o">=</span> <span class="n">receiveVar</span><span class="p">(</span><span class="o">&amp;</span><span class="n">c</span><span class="p">);</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>For debug support, send the index and char received.</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>    <span class="n">sendVar</span><span class="p">(</span><span class="n">U16_INDEX_NDX</span><span class="p">);</span>
+    <span class="n">sendVar</span><span class="p">(</span><span class="n">C_NDX</span><span class="p">);</span>
+    <span class="n">sendVar</span><span class="p">(</span><span class="n">C1_NDX</span><span class="p">);</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>If it was a character, add it to the sum.</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>    <span class="k">if</span> <span class="p">(</span><span class="n">u16_index</span> <span class="o">==</span> <span class="n">CHAR_RECEIVED_INDEX</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">outChar</span><span class="p">(</span><span class="n">c</span><span class="p">);</span>
+      <span class="n">outString</span><span class="p">(</span><span class="s">&quot;  (0x&quot;</span><span class="p">);</span>
+      <span class="n">outUint8Decimal</span><span class="p">(</span><span class="n">c</span><span class="p">);</span>
+      <span class="n">outString</span><span class="p">(</span><span class="s">&quot;) &quot;</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span> <span class="p">(</span><span class="n">c</span> <span class="o">&gt;=</span> <span class="sc">&#39;0&#39;</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">c</span> <span class="o">&lt;=</span> <span class="sc">&#39;9&#39;</span><span class="p">)</span> <span class="p">)</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>A plain char received, so turn it into a number.
+Otherwise, a new total was sent.</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>        <span class="n">i16_val</span> <span class="o">+=</span> <span class="n">c</span> <span class="o">-</span> <span class="sc">&#39;0&#39;</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="n">ASSERT</span><span class="p">(</span><span class="n">u16_index</span> <span class="o">==</span> <span class="n">I16_VAL_NDX</span><span class="p">);</span>
+      <span class="n">outString</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">New total received!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../contents.html">Documentation overview</a><ul>
+  <li><a href="../textbook_examples.html">Textbook examples</a><ul>
+      <li>Previous: <a href="dataXfer_echo.c.html" title="previous chapter">dataXfer_echo.c - Demonstrates an echo program which includes usage of the data transfer protocol</a></li>
+      <li>Next: <a href="../utilities.html" title="next chapter">Utilities</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/util/dataXfer_demo.c"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="../_sources/util/dataXfer_demo.c"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

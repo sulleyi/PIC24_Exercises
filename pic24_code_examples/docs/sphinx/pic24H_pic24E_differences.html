@@ -1,0 +1,185 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Differences between PIC24H and PIC24E &#8212; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 6-May-2015 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/CodeChat.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '6-May-2015',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: ''
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="runAStyle.bat - enforce code formatting standards" href="runAStyle.bat.html" />
+    <link rel="prev" title="Utilities" href="utilities.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="differences-between-pic24h-and-pic24e">
+<h1>Differences between PIC24H and PIC24E<a class="headerlink" href="#differences-between-pic24h-and-pic24e" title="Permalink to this headline">¶</a></h1>
+<p>The library has been updated to be compatible with PIC24E/dsPIC33 devices (only tested on PIC24EP64GP202).
+Most of the examples in Chapters 8-12 have been tested with the PIC24EP64GP202, with the exception of the
+ADC examples where only the simple examples were tested. In the advanced chapter (chapter13), only the
+flash memory examples have been updated. In cases where code changes were necessary, conditional compilation
+was used for the PIC24E/dsPIC33E families.  The ESOS examples (chap 14) were not tested but should work.
+The capstone examples were not modified/tested.</p>
+<p>In most cases, modules have considerable new capability but also retain the same functionality as the
+same modules in the PIC24H family.</p>
+<div class="section" id="clock-speed">
+<h2>Clock Speed<a class="headerlink" href="#clock-speed" title="Permalink to this headline">¶</a></h2>
+<p>The maximum clock speed is 60 MHz (instead of 40 MHz) over full temperature range, and 70Mhz over reduced ranged.
+The library default is 60 MHz for PIC24E devices (there is a clock macro for 70MHz if you want to use it).
+The clock configurations that use a crystal for the PIC24H are compatible with the PIC24E.</p>
+</div>
+<div class="section" id="change-interrupts-analog-pin-configuration">
+<h2>Change Interrupts, Analog pin configuration<a class="headerlink" href="#change-interrupts-analog-pin-configuration" title="Permalink to this headline">¶</a></h2>
+<p>Change interrupt enable/disable, Analog enable/disable are now tied to the digital port name (there
+are no more PCFGx bits for analog/enable disable, change interrupt/disable bit names are changed).
+This is a good change, makes these more consistent with the pullup/pulldown/opendrain control bits (there are pulldowns
+available, on PIC24E pins).</p>
+</div>
+<div class="section" id="i2c">
+<h2>I2C<a class="headerlink" href="#i2c" title="Permalink to this headline">¶</a></h2>
+<p>On 28 pin devices, have to use the Alternate I2C1 pins; the normal ones are not available.</p>
+</div>
+<div class="section" id="remappable-pins">
+<h2>Remappable pins<a class="headerlink" href="#remappable-pins" title="Permalink to this headline">¶</a></h2>
+<p>Remappable pin numbers have changed (code examples have #ifdef to distinguish between families in these cases).
+Some remappable pins on PIC24E are input-only (RPIxx pins).</p>
+</div>
+<div class="section" id="run-time-self-programming-flash">
+<h2>Run Time Self Programming (Flash)<a class="headerlink" href="#run-time-self-programming-flash" title="Permalink to this headline">¶</a></h2>
+<p>Registers for self=programming of flash memory have changed, requiring #ifdef to distinguish between families.
+The erase page size for most PIC24E families is now double that of the PIC24, and so this means that more flash
+space is reserved in low memory for the bootloader because of the increased coarseness of page erases.
+Have to use double word programming on PIC24E devices instead of row programming.</p>
+</div>
+<div class="section" id="spi">
+<h2>SPI<a class="headerlink" href="#spi" title="Permalink to this headline">¶</a></h2>
+<p>The SPI1 port uses dedicated pins for higher speed (not remappable pins). The SPI2 port can be used with
+remappable pins. On the PIC24H, the SPI1 port used remappable pins. Some more functionality availble, but
+compatible with 24H.</p>
+</div>
+<div class="section" id="adc">
+<h2>ADC<a class="headerlink" href="#adc" title="Permalink to this headline">¶</a></h2>
+<p>Lots of new functionality, but PIC24E ADC compatible with PIC24H in basic modes.</p>
+</div>
+<div class="section" id="output-compare">
+<h2>Output Compare<a class="headerlink" href="#output-compare" title="Permalink to this headline">¶</a></h2>
+<p>There are multiple output control modules, so OC1CON is now OC1CONx.
+Some bits have moved around in OC2CONx, required header file changes.</p>
+<p>The output compare modules now have their own internal timers for comparison purposes,
+instead of using the Timer2/Timer3 registers for sources. This really changes how things works, since this
+internal timer has to be reset by an external source, it does not roll over on its own.
+The OCx module can now be either triggerred or synched by multiple sources, a new control register OCxCON2 selects this.</p>
+<p>The PIC24E output compare can be made to emulate the PIC24H output compare for the most part by synching the internal timer of
+the output compare module with either Timer2 or Timer3, which has been done for most of the examples.</p>
+<p>There is now a dedicated high-speed PWM module which was not tested; all of the PWM examples were done using the
+output compare modules as was done for the PIC24H.</p>
+</div>
+<div class="section" id="input-compare">
+<h2>Input Compare<a class="headerlink" href="#input-compare" title="Permalink to this headline">¶</a></h2>
+<p>The changes to the output compare modules were made in a similar fashion to the input compare modules.</p>
+</div>
+<div class="section" id="other-modules">
+<h2>Other modules<a class="headerlink" href="#other-modules" title="Permalink to this headline">¶</a></h2>
+<p>Advanced functional modules like ECAN, RTCC, comparators that have example code in Chapter 12 was not tested.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="contents.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Differences between PIC24H and PIC24E</a><ul>
+<li><a class="reference internal" href="#clock-speed">Clock Speed</a></li>
+<li><a class="reference internal" href="#change-interrupts-analog-pin-configuration">Change Interrupts, Analog pin configuration</a></li>
+<li><a class="reference internal" href="#i2c">I2C</a></li>
+<li><a class="reference internal" href="#remappable-pins">Remappable pins</a></li>
+<li><a class="reference internal" href="#run-time-self-programming-flash">Run Time Self Programming (Flash)</a></li>
+<li><a class="reference internal" href="#spi">SPI</a></li>
+<li><a class="reference internal" href="#adc">ADC</a></li>
+<li><a class="reference internal" href="#output-compare">Output Compare</a></li>
+<li><a class="reference internal" href="#input-compare">Input Compare</a></li>
+<li><a class="reference internal" href="#other-modules">Other modules</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="contents.html">Documentation overview</a><ul>
+  <li><a href="utilities.html">Utilities</a><ul>
+      <li>Previous: <a href="utilities.html" title="previous chapter">Utilities</a></li>
+      <li>Next: <a href="runAStyle.bat.html" title="next chapter">runAStyle.bat - enforce code formatting standards</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/pic24H_pic24E_differences.rst"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/pic24H_pic24E_differences.rst"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,276 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>lcd4bit.c - Character LCD interface example &#8212; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 6-May-2015 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/CodeChat.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '6-May-2015',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: ''
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="adc_test.c - Demonstrates reading the internal ADC in 10-bit mode and converting it to a voltage" href="adc_test.c.html" />
+    <link rel="prev" title="reset.c - Demonstrates software reset, idle, sleep, watchdog timer operation" href="reset.c.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <script type="text/javascript">document.addEventListener("DOMContentLoaded", function(event) {let walk_tree = function(elements,func_walk,func_child) {let walk_children = [];for (let index = 0; index < elements.length; ++index) {let that = elements[index];while (that && !func_walk(that)) {that = that.parentElement;}if (that) {that = func_walk(that);walk_children.push(that);while (that && func_child(that)) {that = func_child(that);walk_children.push(that);}}}return walk_children;};let code = document.getElementsByClassName("fenced-code");walk_tree(code, x => x.nextElementSibling, x => x.firstElementChild).map(x => {x.style.marginTop = 0;x.style.paddingTop = 0;});walk_tree(code, x => x.previousElementSibling, x => x.lastElementChild).map(x => {x.style.marginBottom = 0;x.style.paddingBottom = 0;});});</script><div class="section" id="lcd4bit-c-character-lcd-interface-example">
+<h1>lcd4bit.c - Character LCD interface example<a class="headerlink" href="#lcd4bit-c-character-lcd-interface-example" title="Permalink to this headline">¶</a></h1>
+<p>Demonstrates a Character LCD using the industry
+standard parallel interface in 4-bit mode.
+Assumes a 5V LCD; digital-only IO pins are assumed
+to be used for the four-bit data bus because they are
+5V input tolerant. See chapter 8.</p>
+<p>I/O pins changed to be compatible with the LCD connections
+on the Explorer-16 board,
+also changed the initialization code in initLCD slightly.</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span> 
+<span class="cp">#include</span> <span class="cpf">&quot;pic24_all.h&quot;</span><span class="cp"></span>
+
+
+
+<span class="cp">#define RS_HIGH()        _LATB15 = 1</span>
+<span class="cp">#define RS_LOW()         _LATB15 = 0</span>
+<span class="cp">#define CONFIG_RS()      CONFIG_RB15_AS_DIG_OUTPUT()</span>
+
+<span class="cp">#define RW_HIGH()        _LATD5 = 1</span>
+<span class="cp">#define RW_LOW()         _LATD5 = 0</span>
+<span class="cp">#define CONFIG_RW()      CONFIG_RD5_AS_DIG_OUTPUT()</span>
+
+<span class="cp">#define E_HIGH()         _LATD4 = 1</span>
+<span class="cp">#define E_LOW()          _LATD4 = 0</span>
+<span class="cp">#define CONFIG_E()       CONFIG_RD4_AS_DIG_OUTPUT()</span>
+
+<span class="cp">#define LCD4O          _LATE4</span>
+<span class="cp">#define LCD5O          _LATE5</span>
+<span class="cp">#define LCD6O          _LATE6</span>
+<span class="cp">#define LCD7O          _LATE7</span>
+<span class="cp">#define LCD7I          _RE7</span>
+
+<span class="cp">#define CONFIG_LCD4_AS_INPUT() CONFIG_RE4_AS_DIG_INPUT()</span>
+<span class="cp">#define CONFIG_LCD5_AS_INPUT() CONFIG_RE5_AS_DIG_INPUT()</span>
+<span class="cp">#define CONFIG_LCD6_AS_INPUT() CONFIG_RE6_AS_DIG_INPUT()</span>
+<span class="cp">#define CONFIG_LCD7_AS_INPUT() CONFIG_RE7_AS_DIG_INPUT()</span>
+
+<span class="cp">#define CONFIG_LCD4_AS_OUTPUT() CONFIG_RE4_AS_DIG_OUTPUT()</span>
+<span class="cp">#define CONFIG_LCD5_AS_OUTPUT() CONFIG_RE5_AS_DIG_OUTPUT()</span>
+<span class="cp">#define CONFIG_LCD6_AS_OUTPUT() CONFIG_RE6_AS_DIG_OUTPUT()</span>
+<span class="cp">#define CONFIG_LCD7_AS_OUTPUT() CONFIG_RE7_AS_DIG_OUTPUT()</span>
+
+<span class="cp">#define GET_BUSY_FLAG()  LCD7I</span>
+
+<span class="cm">/**</span>
+<span class="cm"> Functions above this line must be redefined for</span>
+<span class="cm"> your particular PICmicro-to-LCD interface</span>
+<span class="cm">*/</span>
+
+<span class="c1">//Configure 4-bit data bus for output</span>
+<span class="kt">void</span> <span class="nf">configBusAsOutLCD</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">RW_LOW</span><span class="p">();</span>                  <span class="c1">//RW=0 to stop LCD from driving pins</span>
+  <span class="n">CONFIG_LCD4_AS_OUTPUT</span><span class="p">();</span>   <span class="c1">//D4</span>
+  <span class="n">CONFIG_LCD5_AS_OUTPUT</span><span class="p">();</span>   <span class="c1">//D5</span>
+  <span class="n">CONFIG_LCD6_AS_OUTPUT</span><span class="p">();</span>   <span class="c1">//D6</span>
+  <span class="n">CONFIG_LCD7_AS_OUTPUT</span><span class="p">();</span>   <span class="c1">//D7</span>
+<span class="p">}</span>
+
+<span class="c1">//Configure 4-bit data bus for input</span>
+<span class="kt">void</span> <span class="nf">configBusAsInLCD</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">CONFIG_LCD4_AS_INPUT</span><span class="p">();</span>   <span class="c1">//D4</span>
+  <span class="n">CONFIG_LCD5_AS_INPUT</span><span class="p">();</span>   <span class="c1">//D5</span>
+  <span class="n">CONFIG_LCD6_AS_INPUT</span><span class="p">();</span>   <span class="c1">//D6</span>
+  <span class="n">CONFIG_LCD7_AS_INPUT</span><span class="p">();</span>   <span class="c1">//D7</span>
+  <span class="n">RW_HIGH</span><span class="p">();</span>                   <span class="c1">// R/W = 1, for read</span>
+<span class="p">}</span>
+
+<span class="c1">//Output lower 4-bits of u8_c to LCD data lines</span>
+<span class="kt">void</span> <span class="nf">outputToBusLCD</span><span class="p">(</span><span class="kt">uint8_t</span> <span class="n">u8_c</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">LCD4O</span> <span class="o">=</span> <span class="n">u8_c</span> <span class="o">&amp;</span> <span class="mh">0x01</span><span class="p">;</span>          <span class="c1">//D4</span>
+  <span class="n">LCD5O</span> <span class="o">=</span> <span class="p">(</span><span class="n">u8_c</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">)</span><span class="o">&amp;</span> <span class="mh">0x01</span><span class="p">;</span>    <span class="c1">//D5</span>
+  <span class="n">LCD6O</span> <span class="o">=</span> <span class="p">(</span><span class="n">u8_c</span> <span class="o">&gt;&gt;</span> <span class="mi">2</span><span class="p">)</span><span class="o">&amp;</span> <span class="mh">0x01</span><span class="p">;</span>    <span class="c1">//D6</span>
+  <span class="n">LCD7O</span> <span class="o">=</span> <span class="p">(</span><span class="n">u8_c</span> <span class="o">&gt;&gt;</span> <span class="mi">3</span><span class="p">)</span><span class="o">&amp;</span> <span class="mh">0x01</span><span class="p">;</span>    <span class="c1">//D7</span>
+<span class="p">}</span>
+
+<span class="c1">//Configure the control lines for the LCD</span>
+<span class="kt">void</span> <span class="nf">configControlLCD</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">CONFIG_RS</span><span class="p">();</span>     <span class="c1">//RS</span>
+  <span class="n">CONFIG_RW</span><span class="p">();</span>     <span class="c1">//RW</span>
+  <span class="n">CONFIG_E</span><span class="p">();</span>      <span class="c1">//E</span>
+  <span class="n">RW_LOW</span><span class="p">();</span>
+  <span class="n">E_LOW</span><span class="p">();</span>
+  <span class="n">RS_LOW</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="c1">//Pulse the E clock, 1 us delay around edges for</span>
+<span class="c1">//setup/hold times</span>
+<span class="kt">void</span> <span class="nf">pulseE</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">DELAY_US</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+  <span class="n">E_HIGH</span><span class="p">();</span>
+  <span class="n">DELAY_US</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+  <span class="n">E_LOW</span><span class="p">();</span>
+  <span class="n">DELAY_US</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span>
+ 
+</pre></div>
+</div>
+<p>Write a byte (u8_Cmd) to the LCD.
+u8_DataFlag is ‘1’ if data byte, ‘0’ if command byte
+u8_CheckBusy is ‘1’ if must poll busy bit before write, else simply delay before write
+u8_Send8Bits is ‘1’ if must send all 8 bits, else send only upper 4-bits</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="kt">void</span> <span class="nf">writeLCD</span><span class="p">(</span><span class="kt">uint8_t</span> <span class="n">u8_Cmd</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="n">u8_DataFlag</span><span class="p">,</span>
+              <span class="kt">uint8_t</span> <span class="n">u8_CheckBusy</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="n">u8_Send8Bits</span><span class="p">)</span> <span class="p">{</span>
+
+  <span class="kt">uint8_t</span> <span class="n">u8_BusyFlag</span><span class="p">;</span>
+  <span class="kt">uint8_t</span> <span class="n">u8_wdtState</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">u8_CheckBusy</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">RS_LOW</span><span class="p">();</span>            <span class="c1">//RS = 0 to check busy</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>check busy</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>    <span class="n">configBusAsInLCD</span><span class="p">();</span>  <span class="c1">//set data pins all inputs</span>
+    <span class="n">u8_wdtState</span> <span class="o">=</span> <span class="n">_SWDTEN</span><span class="p">;</span>  <span class="c1">//save WDT enable state</span>
+    <span class="n">CLRWDT</span><span class="p">();</span>          <span class="c1">//clear the WDT timer</span>
+    <span class="n">_SWDTEN</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>            <span class="c1">//enable WDT to escape infinite wait</span>
+    <span class="k">do</span> <span class="p">{</span>
+      <span class="n">E_HIGH</span><span class="p">();</span>
+      <span class="n">DELAY_US</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>  <span class="c1">// read upper 4 bits</span>
+      <span class="n">u8_BusyFlag</span> <span class="o">=</span> <span class="n">GET_BUSY_FLAG</span><span class="p">();</span>
+      <span class="n">E_LOW</span><span class="p">();</span>
+      <span class="n">DELAY_US</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+      <span class="n">pulseE</span><span class="p">();</span>              <span class="c1">//pulse again for lower 4-bits</span>
+    <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">u8_BusyFlag</span><span class="p">);</span>
+    <span class="n">_SWDTEN</span> <span class="o">=</span> <span class="n">u8_wdtState</span><span class="p">;</span>   <span class="c1">//restore WDT enable state</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="n">DELAY_MS</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span> <span class="c1">// don&#39;t use busy, just delay</span>
+  <span class="p">}</span>
+  <span class="n">configBusAsOutLCD</span><span class="p">();</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">u8_DataFlag</span><span class="p">)</span> <span class="n">RS_HIGH</span><span class="p">();</span>   <span class="c1">// RS=1, data byte</span>
+  <span class="k">else</span>    <span class="nf">RS_LOW</span><span class="p">();</span>             <span class="c1">// RS=0, command byte</span>
+  <span class="n">outputToBusLCD</span><span class="p">(</span><span class="n">u8_Cmd</span> <span class="o">&gt;&gt;</span> <span class="mi">4</span><span class="p">);</span>  <span class="c1">// send upper 4 bits</span>
+  <span class="n">pulseE</span><span class="p">();</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">u8_Send8Bits</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">outputToBusLCD</span><span class="p">(</span><span class="n">u8_Cmd</span><span class="p">);</span>     <span class="c1">// send lower 4 bits</span>
+    <span class="n">pulseE</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+ 
+</pre></div>
+</div>
+<p>Initialize the LCD, modify to suit your application and LCD</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="kt">void</span> <span class="nf">initLCD</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">DELAY_MS</span><span class="p">(</span><span class="mi">50</span><span class="p">);</span>          <span class="c1">//wait for device to settle</span>
+  <span class="n">writeLCD</span><span class="p">(</span><span class="mh">0x28</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span> <span class="c1">// 4 bit interface, 2 line display</span>
+  <span class="n">writeLCD</span><span class="p">(</span><span class="mh">0x28</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">);</span> <span class="c1">// repeat</span>
+  <span class="n">writeLCD</span><span class="p">(</span><span class="mh">0x06</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">);</span> <span class="c1">// enable display</span>
+  <span class="n">writeLCD</span><span class="p">(</span><span class="mh">0x0C</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">);</span> <span class="c1">// turn display on; cursor, blink is off</span>
+  <span class="n">writeLCD</span><span class="p">(</span><span class="mh">0x01</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">);</span> <span class="c1">// clear display, move cursor to home</span>
+  <span class="n">DELAY_MS</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">//Output a string to the LCD</span>
+<span class="kt">void</span> <span class="nf">outStringLCD</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">psz_s</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">while</span> <span class="p">(</span><span class="o">*</span><span class="n">psz_s</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">writeLCD</span><span class="p">(</span><span class="o">*</span><span class="n">psz_s</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">);</span>
+    <span class="n">psz_s</span><span class="o">++</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+
+<span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">configBasic</span><span class="p">(</span><span class="n">HELLO_MSG</span><span class="p">);</span>      <span class="c1">// Set up heartbeat, UART, print hello message and diags</span>
+
+  <span class="n">configControlLCD</span><span class="p">();</span>      <span class="c1">//configure the LCD control lines</span>
+  <span class="n">initLCD</span><span class="p">();</span>               <span class="c1">//initialize the LCD</span>
+
+  <span class="n">outStringLCD</span><span class="p">(</span><span class="s">&quot;******Hello, my name is Bob********&quot;</span><span class="p">);</span>
+  <span class="n">writeLCD</span><span class="p">(</span><span class="mh">0xC0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">);</span>  <span class="c1">// cursor to 2nd line</span>
+  <span class="n">outStringLCD</span><span class="p">(</span><span class="s">&quot;-----these lines are moving!-------&quot;</span><span class="p">);</span>
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">writeLCD</span><span class="p">(</span><span class="mh">0x18</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">);</span>  <span class="c1">// shift left</span>
+    <span class="n">DELAY_MS</span><span class="p">(</span><span class="mi">200</span><span class="p">);</span>
+    <span class="n">doHeartbeat</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../contents.html">Documentation overview</a><ul>
+  <li><a href="../textbook_examples.html">Textbook examples</a><ul>
+      <li>Previous: <a href="reset.c.html" title="previous chapter">reset.c - Demonstrates software reset, idle, sleep, watchdog timer operation</a></li>
+      <li>Next: <a href="adc_test.c.html" title="next chapter">adc_test.c - Demonstrates reading the internal ADC in 10-bit mode and converting it to a voltage</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/explorer16_100p/lcd4bit.c"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="../_sources/explorer16_100p/lcd4bit.c"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

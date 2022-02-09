@@ -1,0 +1,182 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>swapU32.s - Swap two U32 values referenced by a pointer &#8212; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 6-May-2015 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/CodeChat.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '6-May-2015',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: ''
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="upcase.s - Change a string to uppercase" href="upcase.s.html" />
+    <link rel="prev" title="psv_upcase_24E33E.s - Initialize string from program memory (PIC24E/dsPIC33E)" href="psv_upcase_24E33E.s.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <script type="text/javascript">document.addEventListener("DOMContentLoaded", function(event) {let walk_tree = function(elements,func_walk,func_child) {let walk_children = [];for (let index = 0; index < elements.length; ++index) {let that = elements[index];while (that && !func_walk(that)) {that = that.parentElement;}if (that) {that = func_walk(that);walk_children.push(that);while (that && func_child(that)) {that = func_child(that);walk_children.push(that);}}}return walk_children;};let code = document.getElementsByClassName("fenced-code");walk_tree(code, x => x.nextElementSibling, x => x.firstElementChild).map(x => {x.style.marginTop = 0;x.style.paddingTop = 0;});walk_tree(code, x => x.previousElementSibling, x => x.lastElementChild).map(x => {x.style.marginBottom = 0;x.style.paddingBottom = 0;});});</script><div class="section" id="swapu32-s-swap-two-u32-values-referenced-by-a-pointer">
+<h1>swapU32.s - Swap two U32 values referenced by a pointer<a class="headerlink" href="#swapu32-s-swap-two-u32-values-referenced-by-a-pointer" title="Permalink to this headline">¶</a></h1>
+<div class="code fenced-code highlight-pic24"><div class="highlight"><pre><span></span> 
+<span class="kd">.include</span> <span class="s">&quot;xc.inc&quot;</span>
+
+<span class="kd">.global</span> <span class="nv">__reset</span>          <span class="c1">;The label for the first line of code.</span>
+
+
+     <span class="kd">.bss</span>           <span class="c1">;unitialized data section</span>
+
+<span class="nl">au32_x:</span>    <span class="kd">.space</span>   <span class="mf">4</span><span class="o">*</span><span class="mf">4</span>  <span class="c1">; four element u32 array</span>
+
+<span class="kd">.text</span>                             <span class="c1">;Start of Code section</span>
+<span class="nl">__reset:</span>                          <span class="c1">; first instruction located at __reset label</span>
+       <span class="k">mov</span> <span class="kc">#</span><span class="nv">__SP_init</span><span class="p">,</span> <span class="nb">W15</span>       <span class="c1">;Initalize the Stack Pointer</span>
+       <span class="k">mov</span> <span class="kc">#</span><span class="nv">__SPLIM_init</span><span class="p">,</span> <span class="nb">W0</span>
+       <span class="k">mov</span> <span class="nb">W0</span><span class="p">,</span> <span class="nv">SPLIM</span>             <span class="c1">;Initialize the stack limit register</span>
+       <span class="k">rcall</span> <span class="nv">init_a</span>
+       <span class="k">goto</span> <span class="nv">main</span>
+ <span class="c1">;__SP_init set by linker to be after allocated data</span>
+
+<span class="nl">main:</span>
+       <span class="k">mov</span> <span class="kc">#</span><span class="nb">a</span><span class="nv">u32_x</span><span class="p">,</span> <span class="nb">W0</span>
+       <span class="k">mov.b</span> <span class="kc">#</span><span class="mf">1</span><span class="p">,</span> <span class="nb">W1</span>
+       <span class="k">mov.b</span> <span class="kc">#</span><span class="mf">3</span><span class="p">,</span> <span class="nb">W2</span>
+       <span class="k">rcall</span> <span class="nv">swapU32</span>
+
+
+<span class="nl">done:</span>
+    <span class="k">goto</span>    <span class="nv">done</span>           <span class="c1">;infinite wait loop</span>
+ 
+ 
+</pre></div>
+</div>
+<p>u32_baseptr passed in W0
+u8_k passed in W1
+u8_i passed in W2
+W3 used for &amp;bptr[k]
+W4 used for &amp;bptr[j]
+W5,W6 used for u32_tmp</p>
+<div class="code fenced-code highlight-pic24"><div class="highlight"><pre><span></span><span class="nl">swapU32:</span>
+    <span class="k">ze</span> <span class="nb">W1</span><span class="p">,</span> <span class="nb">W1</span>
+    <span class="k">ze</span> <span class="nb">W2</span><span class="p">,</span> <span class="nb">W2</span>
+    <span class="k">sl</span> <span class="nb">W1</span><span class="p">,</span> <span class="kc">#</span><span class="mf">2</span><span class="p">,</span> <span class="nb">W1</span>      <span class="c1">; k=k&lt;&lt;2=k*4</span>
+    <span class="k">sl</span> <span class="nb">W2</span><span class="p">,</span> <span class="kc">#</span><span class="mf">2</span><span class="p">,</span> <span class="nb">W2</span>      <span class="c1">; j=j&lt;&lt;2=j*4</span>
+    <span class="k">add</span> <span class="nb">W0</span><span class="p">,</span> <span class="nb">W1</span><span class="p">,</span> <span class="nb">W3</span>     <span class="c1">; W3 = &amp;bptr[k]</span>
+    <span class="k">add</span> <span class="nb">W0</span><span class="p">,</span> <span class="nb">W2</span><span class="p">,</span> <span class="nb">W4</span>     <span class="c1">; W4 = &amp;bptr[j]</span>
+
+    <span class="k">mov</span> <span class="p">[</span><span class="nb">W3</span><span class="o">++</span><span class="p">],</span> <span class="nb">W5</span>     <span class="c1">; W5 = bptr[k].LSW</span>
+    <span class="k">mov</span> <span class="p">[</span><span class="nb">W3</span><span class="o">--</span><span class="p">],</span> <span class="nb">W6</span>     <span class="c1">; W6 = bptr[k].MSW</span>
+
+    <span class="k">mov</span> <span class="p">[</span><span class="nb">W4</span><span class="o">++</span><span class="p">],</span> <span class="p">[</span><span class="nb">W3</span><span class="o">++</span><span class="p">]</span> <span class="c1">; bptr[k].LSW = bptr[j].LSW</span>
+    <span class="k">mov</span> <span class="p">[</span><span class="nb">W4</span><span class="o">--</span><span class="p">],</span> <span class="p">[</span><span class="nb">W3</span><span class="o">--</span><span class="p">]</span> <span class="c1">; bptr[k].MSW = bptr[j].MSW</span>
+
+    <span class="k">add</span> <span class="nb">W0</span><span class="p">,</span> <span class="nb">W2</span><span class="p">,</span> <span class="nb">W4</span>     <span class="c1">; W4 = &amp;bptr[j]</span>
+
+    <span class="k">mov</span> <span class="nb">W5</span><span class="p">,</span> <span class="p">[</span><span class="nb">W4</span><span class="o">++</span><span class="p">]</span>     <span class="c1">; bptr[j].LSW = u32_tmp.LSW;</span>
+    <span class="k">mov</span> <span class="nb">W6</span><span class="p">,</span> <span class="p">[</span><span class="nb">W4</span><span class="o">--</span><span class="p">]</span>     <span class="c1">; bptr[j].MSW = u32_tmp.MSW;</span>
+
+    <span class="k">return</span>
+ 
+</pre></div>
+</div>
+<p>Initialize au32_x array</p>
+<div class="code fenced-code highlight-pic24"><div class="highlight"><pre><span></span><span class="nl">init_a:</span>
+
+    <span class="k">mov</span> <span class="kc">#</span><span class="nb">a</span><span class="nv">u32_x</span><span class="p">,</span> <span class="nb">W2</span>
+    <span class="k">mov</span> <span class="kc">#</span><span class="mh">0xA1F9</span><span class="p">,</span> <span class="nb">W0</span>
+    <span class="k">mov</span> <span class="kc">#</span><span class="mh">0x0982</span><span class="p">,</span> <span class="nb">W1</span>
+    <span class="k">mov.d</span> <span class="nb">W0</span><span class="p">,</span> <span class="p">[</span><span class="nb">W2</span><span class="o">++</span><span class="p">]</span>
+    <span class="k">mov</span> <span class="kc">#</span><span class="mh">0x3204</span><span class="p">,</span> <span class="nb">W0</span>
+    <span class="k">mov</span> <span class="kc">#</span><span class="mh">0x88B2</span><span class="p">,</span> <span class="nb">W1</span>
+    <span class="k">mov.d</span> <span class="nb">W0</span><span class="p">,</span> <span class="p">[</span><span class="nb">W2</span><span class="o">++</span><span class="p">]</span>
+    <span class="k">mov</span> <span class="kc">#</span><span class="mh">0x6B10</span><span class="p">,</span> <span class="nb">W0</span>
+    <span class="k">mov</span> <span class="kc">#</span><span class="mh">0xE3D9</span><span class="p">,</span> <span class="nb">W1</span>
+    <span class="k">mov.d</span> <span class="nb">W0</span><span class="p">,</span> <span class="p">[</span><span class="nb">W2</span><span class="o">++</span><span class="p">]</span>
+    <span class="k">mov</span> <span class="kc">#</span><span class="mh">0xFB29</span><span class="p">,</span> <span class="nb">W0</span>
+    <span class="k">mov</span> <span class="kc">#</span><span class="mh">0xC385</span><span class="p">,</span> <span class="nb">W1</span>
+    <span class="k">mov.d</span> <span class="nb">W0</span><span class="p">,</span> <span class="p">[</span><span class="nb">W2</span><span class="o">++</span><span class="p">]</span>
+    <span class="k">return</span>
+
+    <span class="kd">.end</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../contents.html">Documentation overview</a><ul>
+  <li><a href="../textbook_examples.html">Textbook examples</a><ul>
+      <li>Previous: <a href="psv_upcase_24E33E.s.html" title="previous chapter">psv_upcase_24E33E.s - Initialize string from program memory (PIC24E/dsPIC33E)</a></li>
+      <li>Next: <a href="upcase.s.html" title="next chapter">upcase.s - Change a string to uppercase</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/chap06/swapU32.s"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="../_sources/chap06/swapU32.s"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

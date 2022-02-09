@@ -1,0 +1,718 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>SConstruct.py - Build all libraries and examples over many chips &#8212; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 6-May-2015 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/CodeChat.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '6-May-2015',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: ''
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="SCons_bootloader.py - Build the bootloader" href="SCons_bootloader.py.html" />
+    <link rel="prev" title="runscons.bat - Run SCons, collecting and filtering warnings" href="runscons.bat.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <script type="text/javascript">document.addEventListener("DOMContentLoaded", function(event) {let walk_tree = function(elements,func_walk,func_child) {let walk_children = [];for (let index = 0; index < elements.length; ++index) {let that = elements[index];while (that && !func_walk(that)) {that = that.parentElement;}if (that) {that = func_walk(that);walk_children.push(that);while (that && func_child(that)) {that = func_child(that);walk_children.push(that);}}}return walk_children;};let code = document.getElementsByClassName("fenced-code");walk_tree(code, x => x.nextElementSibling, x => x.firstElementChild).map(x => {x.style.marginTop = 0;x.style.paddingTop = 0;});walk_tree(code, x => x.previousElementSibling, x => x.lastElementChild).map(x => {x.style.marginBottom = 0;x.style.paddingBottom = 0;});});</script><div class="section" id="sconstruct-py-build-all-libraries-and-examples-over-many-chips">
+<h1><a class="toc-backref" href="#id1">SConstruct.py - Build all libraries and examples over many chips</a><a class="headerlink" href="#sconstruct-py-build-all-libraries-and-examples-over-many-chips" title="Permalink to this headline">¶</a></h1>
+<p>This file contains all that a SConstruct file normally contains.
+In order to use CodeChat, however, all Python files must end with
+a <code class="docutils literal"><span class="pre">.py</span></code> extension. So, SConstuct simply executes this file.</p>
+<blockquote>
+<div><p>This file provides an automated build process for the
+ref index “libraries” included in this collection.
+To use:</p>
+<ol class="arabic simple">
+<li>Install SCons.</li>
+<li>Install the Microchip compiler. Make sure your path
+includes the directories in which the compiler binaries
+exist.</li>
+<li>From the command line, change to the directory in which
+this file lies.</li>
+<li>Execute <code class="docutils literal"><span class="pre">SCons</span></code>, which builds everything. Optionally use
+<a class="reference internal" href="runscons.bat.html"><span class="doc">runscons.bat</span></a> to filter through the resulting
+warnings.</li>
+</ol>
+<p>The build process can be modified by passing options to
+SCons. See <code class="docutils literal"><span class="pre">SCons</span> <span class="pre">--help</span></code> for options specific
+to this build and <code class="docutils literal"><span class="pre">SCons</span> <span class="pre">-H</span></code> for generic SCons
+options.</p>
+</div></blockquote>
+<p>The generated build targets follow the naming convention:</p>
+<blockquote>
+<div>[bootloader/esos]_hardware platform_mcu_[clock/nofloat]</div></blockquote>
+<p>This module perfoms builds over a variety of CPUs and configurations.
+The files listed below specify a set of targets used in each of these builds.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="SCons_bootloader.py.html">SCons_bootloader.py - Build the bootloader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SCons_build.py.html">SCons_build.py - Build all libraries and examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="SCons_build.py.html#common-sources-used-for-the-pic24-support-library">Common sources used for the PIC24 support library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="SCons_build.py.html#functions-used-to-build-the-library">Functions used to build the library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="SCons_build.py.html#definition-of-targets">Definition of targets</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="SCons_esos.py.html">SCons_esos.py - Build ESOS chapter 14 applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SCons_zipit.py.html">SCons_zipit.py - Build docs then create a .zip for distribution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="templates/SConscript.py.html">SConscript.py - Build source files from template</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="templates/SConscript.py.html#setup-for-template-building">Setup for template building</a></li>
+<li class="toctree-l2"><a class="reference internal" href="templates/SConscript.py.html#functions-supporting-template-file-builds">Functions supporting template file builds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="templates/SConscript.py.html#calls-to-build-templates">Calls to build templates</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="SConstruct.html">SConstruct - Define the SCons build process</a></li>
+</ul>
+</div>
+<p>The overall structure of this file is:</p>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#sconstruct-py-build-all-libraries-and-examples-over-many-chips" id="id1">SConstruct.py - Build all libraries and examples over many chips</a><ul>
+<li><a class="reference internal" href="#create-a-microchip-xc16-construction-environment" id="id2">Create a Microchip XC16 Construction Environment</a><ul>
+<li><a class="reference internal" href="#create-a-bin2hex-builder" id="id3">Create a bin2hex builder</a></li>
+<li><a class="reference internal" href="#linker-dependencies" id="id4">Linker dependencies</a></li>
+<li><a class="reference internal" href="#command-line-options" id="id5">Command-line options</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#definition-of-targets" id="id6">Definition of targets</a></li>
+<li><a class="reference internal" href="#library-builds" id="id7">Library builds</a><ul>
+<li><a class="reference internal" href="#build-over-various-mcus" id="id8">Build over various MCUs</a></li>
+<li><a class="reference internal" href="#build-over-various-hardware-platforms" id="id9">Build over various hardware platforms</a></li>
+<li><a class="reference internal" href="#build-over-various-clocks" id="id10">Build over various clocks</a></li>
+<li><a class="reference internal" href="#misc-builds" id="id11">Misc builds</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#bootloader-builds" id="id12">Bootloader builds</a></li>
+<li><a class="reference internal" href="#esos-builds" id="id13">ESOS builds</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span> 
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">psutil</span>
+ 
+</pre></div>
+</div>
+<p>Make sure SCons is recent enough.</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="n">EnsureSConsVersion</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+ 
+ 
+</pre></div>
+</div>
+<div class="section" id="create-a-microchip-xc16-construction-environment">
+<h2><a class="toc-backref" href="#id2">Create a Microchip XC16 Construction Environment</a><a class="headerlink" href="#create-a-microchip-xc16-construction-environment" title="Permalink to this headline">¶</a></h2>
+<p>Define command-line options to set bootloader.
+The Environment below depends on opts, so this must go here instead of with
+the rest of the <a class="reference internal" href="#command-line-options">Command-line options</a>.</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="n">opts</span> <span class="o">=</span> <span class="n">Variables</span><span class="p">()</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">EnumVariable</span><span class="p">(</span><span class="s1">&#39;BOOTLDR&#39;</span><span class="p">,</span> <span class="s1">&#39;Determines bootloader type&#39;</span><span class="p">,</span> <span class="s1">&#39;msu&#39;</span><span class="p">,</span>
+                    <span class="n">allowed_values</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;msu&#39;</span><span class="p">,</span> <span class="s1">&#39;none&#39;</span><span class="p">)))</span>
+ 
+</pre></div>
+</div>
+<p>Create the environment.</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="n">env</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>Force SCons to set up with gnu tools to start
+with reasonable defaults. Note: using platform = ‘posix’
+causes SCons to try to call fork() when executing programs
+(such as compilers), which errors out on Windows.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="n">tools</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;gcc&#39;</span><span class="p">,</span> <span class="s1">&#39;gnulink&#39;</span><span class="p">,</span> <span class="s1">&#39;ar&#39;</span><span class="p">,</span> <span class="s1">&#39;zip&#39;</span><span class="p">,</span> <span class="s1">&#39;packaging&#39;</span><span class="p">],</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="n">opts</span><span class="p">,</span>
+        <span class="n">CPPPATH</span> <span class="o">=</span> <span class="s1">&#39;lib/include&#39;</span><span class="p">,</span>
+        <span class="n">CC</span> <span class="o">=</span> <span class="s1">&#39;xc16-gcc&#39;</span><span class="p">,</span>
+        <span class="n">LIBPATH</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span>
+        <span class="n">AR</span> <span class="o">=</span> <span class="s1">&#39;xc16-ar&#39;</span><span class="p">,</span>
+        <span class="n">LINK</span> <span class="o">=</span> <span class="s1">&#39;xc16-gcc&#39;</span><span class="p">,</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>Copied and cobbled together from SConsToolscc.py with mods</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="n">CCCOM</span> <span class="o">=</span> <span class="s1">&#39;$CC -c -o $TARGET $CFLAGS $CCFLAGS $CPPFLAGS $_CPPDEFFLAGS $_CPPINCFLAGS $SOURCES&#39;</span><span class="p">,</span>
+        <span class="n">CCCCOMSTR</span> <span class="o">=</span> <span class="s1">&#39;Compiling $SOURCES&#39;</span><span class="p">,</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>The warnings provide some lint-like checking. Omitted options: -Wstrict-prototypes -Wold-style-definition complains about void foo(), which should be void foo(void), but isn’t worth the work to change.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="n">CCFLAGS</span> <span class="o">=</span> <span class="s1">&#39;-mcpu=${MCU} -O1 -msmart-io=1 -omf=elf -Wall -Wextra -Wdeclaration-after-statement -Wlong-long -fdiagnostics-show-option&#39;</span><span class="p">,</span>
+        <span class="n">LINKFLAGS</span> <span class="o">=</span> <span class="s1">&#39;-mcpu=${MCU} -omf=elf -Wl,--heap=100,--script=&quot;$LINKERSCRIPT&quot;,--stack=16,--check-sections,--data-init,--pack-data,--handles,--isr,--no-gc-sections,--fill-upper=0,--stackguard=16,--no-force-link,--smart-io&#39;</span><span class="p">,</span>
+        <span class="n">LINKERSCRIPT</span> <span class="o">=</span> <span class="s1">&#39;lib/lkr/p${MCU}_bootldr.gld&#39;</span><span class="p">,</span>
+        <span class="n">ARFLAGS</span> <span class="o">=</span> <span class="s1">&#39;rcs&#39;</span><span class="p">,</span>
+        <span class="n">ARSTR</span> <span class="o">=</span> <span class="s1">&#39;Create static library: $TARGET&#39;</span><span class="p">,</span>
+        <span class="n">OBJSUFFIX</span> <span class="o">=</span> <span class="s1">&#39;.o&#39;</span><span class="p">,</span>
+        <span class="n">PROGSUFFIX</span> <span class="o">=</span> <span class="s1">&#39;.elf&#39;</span><span class="p">,</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>Copy the host envrionment variables for our scons environment
+so scons can find the build tools and related env vars.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="n">ENV</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">,</span>
+      <span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="create-a-bin2hex-builder">
+<h3><a class="toc-backref" href="#id3">Create a bin2hex builder</a><a class="headerlink" href="#create-a-bin2hex-builder" title="Permalink to this headline">¶</a></h3>
+<p>Add the bin2hex function to the environment as a new builder
+This functions converts a binary (.elf or .cof) file to a hex file.</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">bin2hex</span><span class="p">(</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>The name of the .elf/.cof file to be converted.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">binName</span><span class="p">,</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>An Environment in which to build these sources.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">buildEnvironment</span><span class="p">,</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>A string to serve as an alias for this build.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">aliasString</span><span class="p">):</span>
+
+  <span class="n">f</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">binName</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+  <span class="n">myHex</span> <span class="o">=</span> <span class="n">buildEnvironment</span><span class="o">.</span><span class="n">Hex</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>Add this hex file to a convenient alias</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">buildEnvironment</span><span class="o">.</span><span class="n">Alias</span><span class="p">(</span><span class="n">aliasString</span><span class="p">,</span> <span class="n">myHex</span><span class="p">)</span>
+
+<span class="n">b2h</span> <span class="o">=</span> <span class="n">Builder</span><span class="p">(</span>
+        <span class="n">action</span> <span class="o">=</span> <span class="s1">&#39;xc16-bin2hex $SOURCE -a -omf=elf&#39;</span><span class="p">,</span>
+        <span class="n">suffix</span> <span class="o">=</span> <span class="s1">&#39;hex&#39;</span><span class="p">,</span>
+        <span class="n">src_suffix</span> <span class="o">=</span> <span class="s1">&#39;elf&#39;</span><span class="p">)</span>
+<span class="n">env</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span><span class="n">BUILDERS</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Hex&#39;</span> <span class="p">:</span> <span class="n">b2h</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="linker-dependencies">
+<h3><a class="toc-backref" href="#id4">Linker dependencies</a><a class="headerlink" href="#linker-dependencies" title="Permalink to this headline">¶</a></h3>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">linker_side_effect</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">program</span><span class="p">):</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>The linker as of xc16 v1.30 uses a preprocessor by default on linker scripts, which creates a temp file named linker_script.00 (where linker_script is the name of the linker script), which causes parallel builds to fail. This can be disabled via <code class="docutils literal"><span class="pre">--no-cpp</span></code>, but then the link fails due to the presence of preprocessor directorive. So, prevent parallel links of the same-named linker script. See <a class="reference external" href="http://scons.org/faq.html#How_do_I_prevent_commands_from_being_executed_in_parallel.3F">http://scons.org/faq.html#How_do_I_prevent_commands_from_being_executed_in_parallel.3F</a>, <a class="reference external" href="https://bitbucket.org/scons/scons/wiki/SConsMethods/SideEffect">https://bitbucket.org/scons/scons/wiki/SConsMethods/SideEffect</a>, <code class="docutils literal"><span class="pre">SideEffect</span></code> in <a class="reference external" href="http://scons.org/doc/2.5.1/HTML/scons-man.html">http://scons.org/doc/2.5.1/HTML/scons-man.html</a>.</p>
+<p>Note that the raw <code class="docutils literal"><span class="pre">be['LINKERSCRIPT']</span></code> string contains un-expanded variables, which makes scons unhappy. For example, providing <code class="docutils literal"><span class="pre">bootloader/pic24_dspic33_bootloader.X/lkr/p${MCU}.gld.00</span></code> as a SideEffect the produces errors like <code class="docutils literal"><span class="pre">Internal</span> <span class="pre">Error:</span> <span class="pre">no</span> <span class="pre">cycle</span> <span class="pre">found</span> <span class="pre">for</span> <span class="pre">node</span> <span class="pre">build\esos_microstick2_33EP128GP502\chap14\app_ds1722.elf</span> <span class="pre">(&lt;SCons.Node.FS.File</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x04A2BC60&gt;)</span> <span class="pre">in</span> <span class="pre">state</span> <span class="pre">pending</span></code>. So, produce a full, valid file name using subst.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">linker_temp_file</span> <span class="o">=</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">env</span><span class="o">.</span><span class="n">subst</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;LINKERSCRIPT&#39;</span><span class="p">]))</span> <span class="o">+</span> <span class="s1">&#39;.00&#39;</span>
+  <span class="n">env</span><span class="o">.</span><span class="n">SideEffect</span><span class="p">(</span><span class="n">linker_temp_file</span><span class="p">,</span> <span class="n">program</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="command-line-options">
+<h3><a class="toc-backref" href="#id5">Command-line options</a><a class="headerlink" href="#command-line-options" title="Permalink to this headline">¶</a></h3>
+<p>adjust our default environment based on user command-line requests</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="nb">dict</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">Dictionary</span><span class="p">()</span>
+<span class="k">if</span> <span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;BOOTLDR&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;msu&#39;</span><span class="p">:</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">Replace</span><span class="p">(</span><span class="n">LINKERSCRIPT</span> <span class="o">=</span> <span class="s1">&#39;p${MCU}.gld&#39;</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<p>By default, run number_of_cpus*4 jobs at once. Some results from running on my 8-core PC, gathered from the Total build time returned by the –debug=time scons command-line option:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="5%" />
+<col width="26%" />
+<col width="38%" />
+<col width="31%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">-j</th>
+<th class="head">Time (sec)</th>
+<th class="head">Time (hh:mm:ss)</th>
+<th class="head">Speedup</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>32</td>
+<td>303</td>
+<td>0:05:03</td>
+<td>11.66006601</td>
+</tr>
+<tr class="row-odd"><td>16</td>
+<td>348.7</td>
+<td>0:05:49</td>
+<td>10.13191855</td>
+</tr>
+<tr class="row-even"><td>8</td>
+<td>510.9</td>
+<td>0:08:31</td>
+<td>6.915247602</td>
+</tr>
+<tr class="row-odd"><td>4</td>
+<td>916</td>
+<td>0:15:16</td>
+<td>3.8569869</td>
+</tr>
+<tr class="row-even"><td>2</td>
+<td>1777</td>
+<td>0:29:37</td>
+<td>1.98818233</td>
+</tr>
+<tr class="row-odd"><td>1</td>
+<td>3533</td>
+<td>0:58:53</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span> 
+<span class="n">env</span><span class="o">.</span><span class="n">SetOption</span><span class="p">(</span><span class="s1">&#39;num_jobs&#39;</span><span class="p">,</span> <span class="n">psutil</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span><span class="o">*</span><span class="mi">4</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;Running with -j </span><span class="si">%d</span><span class="s2">.&quot;</span> <span class="o">%</span> <span class="n">GetOption</span><span class="p">(</span><span class="s1">&#39;num_jobs&#39;</span><span class="p">))</span>
+ 
+</pre></div>
+</div>
+<p>generate some command line help for our custom options</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="n">Help</span><span class="p">(</span><span class="n">opts</span><span class="o">.</span><span class="n">GenerateHelpText</span><span class="p">(</span><span class="n">env</span><span class="p">))</span>
+<span class="n">Help</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;Additional targets:</span>
+<span class="s2">  template-build: Build all .c/.h files which are produced by templates.</span>
+<span class="s2">  zipit: Build an archive for distributing end-user library contents.</span>
+<span class="s2">  bootloader: Build the bootloader binaries only.&quot;&quot;&quot;</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<p>A DEBUG STATEMENT to see what the scons build envrionment (env) has defined.</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="c1">#print(env.Dump())</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="definition-of-targets">
+<h2><a class="toc-backref" href="#id6">Definition of targets</a><a class="headerlink" href="#definition-of-targets" title="Permalink to this headline">¶</a></h2>
+<p>First, set up for defining targets.</p>
+<p>Inform SCons about the dependencies in the template-based files.</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="n">SConscript</span><span class="p">(</span><span class="s1">&#39;templates/SConscript.py&#39;</span><span class="p">,</span> <span class="s1">&#39;env&#39;</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<p>Create a target which zips up library files. Only build it if explicitly requested on the command line.</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="s1">&#39;zipit&#39;</span> <span class="ow">in</span> <span class="n">COMMAND_LINE_TARGETS</span><span class="p">:</span>
+    <span class="n">zip_file</span> <span class="o">=</span> <span class="s1">&#39;build/pic24_code_examples.zip&#39;</span>
+    <span class="n">hg_dir</span> <span class="o">=</span> <span class="s1">&#39;build/pic24lib_all&#39;</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">Command</span><span class="p">(</span><span class="n">zip_file</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="p">[</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:3.0em;"><p>Clone the repo to create a clean distribution.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>      <span class="n">Delete</span><span class="p">(</span><span class="n">hg_dir</span><span class="p">,</span> <span class="n">must_exist</span> <span class="o">=</span> <span class="mi">0</span><span class="p">),</span>
+      <span class="s1">&#39;hg clone . &#39;</span> <span class="o">+</span> <span class="n">hg_dir</span><span class="p">,</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:3.0em;"><p>Copy over hex files from the build.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>      <span class="n">Copy</span><span class="p">(</span><span class="n">hg_dir</span> <span class="o">+</span> <span class="s1">&#39;/hex&#39;</span><span class="p">,</span> <span class="s1">&#39;hex&#39;</span><span class="p">),</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:3.0em;"><p>Perform zip in clean clone.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>      <span class="s1">&#39;scons -C &#39;</span> <span class="o">+</span> <span class="n">hg_dir</span> <span class="o">+</span> <span class="s1">&#39; -f SCons_zipit.py&#39;</span><span class="p">,</span>
+    <span class="p">])</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">Alias</span><span class="p">(</span><span class="s1">&#39;zipit&#39;</span><span class="p">,</span> <span class="n">zip_file</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>Only build this if it’s explicitly requested. Since the dependencies of <code class="docutils literal"><span class="pre">zip_fil</span></code> are wrong, force a build using AlwaysBuild.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>    <span class="n">env</span><span class="o">.</span><span class="n">AlwaysBuild</span><span class="p">(</span><span class="n">zip_file</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+</div>
+<div class="section" id="library-builds">
+<h2><a class="toc-backref" href="#id7">Library builds</a><a class="headerlink" href="#library-builds" title="Permalink to this headline">¶</a></h2>
+<p>Call <a class="reference internal" href="SCons_build.py.html"><span class="doc">SCons_build.py - Build all libraries and examples</span></a> with a specific buildTargets value. It create a variant build
+named <code class="docutils literal"><span class="pre">hardware_platform</span> <span class="pre">_</span> <span class="pre">MCU</span> <span class="pre">_</span> <span class="pre">clock</span></code>.</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">buildTargetsSConscript</span><span class="p">(</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>A list of library targets to build, as defined in <a class="reference internal" href="SCons_build.py.html"><span class="doc">SCons_build.py - Build all libraries and examples</span></a>.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">buildTargets</span><span class="p">,</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>The Environment to use for building. Use <code class="docutils literal"><span class="pre">env.Clone(MCU='blah',</span> <span class="pre">CPPDEFINES='blah'</span></code>
+to choose a MCU, clock, and hardware platform as desired.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">env</span><span class="p">,</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>A string giving the name of the hardware platform.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">hardware_platform</span><span class="p">,</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>The same of the clock chosen, or of some special build option (such as
+nofloat).</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">extra_defines</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">):</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>Build a variant directory name, based on the hardware platform, MCU, and extra defines (if any)</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">vdir</span> <span class="o">=</span> <span class="s1">&#39;build/&#39;</span> <span class="o">+</span> <span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">hardware_platform</span><span class="p">,</span> <span class="n">env</span><span class="p">[</span><span class="s1">&#39;MCU&#39;</span><span class="p">]])</span>
+  <span class="k">if</span> <span class="n">extra_defines</span><span class="p">:</span>
+    <span class="n">vdir</span> <span class="o">+=</span> <span class="s1">&#39;_&#39;</span> <span class="o">+</span> <span class="n">extra_defines</span>
+  <span class="n">SConscript</span><span class="p">(</span><span class="s1">&#39;SCons_build.py&#39;</span><span class="p">,</span> <span class="n">exports</span> <span class="o">=</span> <span class="s1">&#39;buildTargets env bin2hex linker_side_effect&#39;</span><span class="p">,</span>
+    <span class="n">variant_dir</span> <span class="o">=</span> <span class="n">vdir</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<div class="section" id="build-over-various-mcus">
+<h3><a class="toc-backref" href="#id8">Build over various MCUs</a><a class="headerlink" href="#build-over-various-mcus" title="Permalink to this headline">¶</a></h3>
+<p>Build small, non-DMA on the PIC24HJ32GP202</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="n">buildTargetsSConscript</span><span class="p">([</span><span class="s1">&#39;chap08&#39;</span><span class="p">,</span> <span class="s1">&#39;chap09&#39;</span><span class="p">,</span> <span class="s1">&#39;chap10&#39;</span><span class="p">,</span> <span class="s1">&#39;chap11&#39;</span><span class="p">,</span> <span class="s1">&#39;chap12&#39;</span><span class="p">],</span>
+<span class="n">env</span><span class="o">.</span><span class="n">Clone</span><span class="p">(</span><span class="n">MCU</span><span class="o">=</span><span class="s1">&#39;24HJ64GP202&#39;</span><span class="p">),</span> <span class="s1">&#39;default&#39;</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<p>Build everything on the PIC24FJ64GA002</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="n">buildTargetsSConscript</span><span class="p">([</span><span class="s1">&#39;chap08&#39;</span><span class="p">,</span> <span class="s1">&#39;chap09&#39;</span><span class="p">,</span> <span class="s1">&#39;chap10&#39;</span><span class="p">,</span> <span class="s1">&#39;chap11&#39;</span><span class="p">,</span> <span class="s1">&#39;chap12&#39;</span><span class="p">,</span>
+                        <span class="s1">&#39;chap15&#39;</span><span class="p">],</span>
+  <span class="n">env</span><span class="o">.</span><span class="n">Clone</span><span class="p">(</span><span class="n">MCU</span><span class="o">=</span><span class="s1">&#39;24FJ64GA002&#39;</span><span class="p">),</span> <span class="s1">&#39;default&#39;</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<p>Build small, non-DMA on the dsPIC33FJ32GP202</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="n">buildTargetsSConscript</span><span class="p">([</span><span class="s1">&#39;chap08&#39;</span><span class="p">,</span> <span class="s1">&#39;chap09&#39;</span><span class="p">,</span> <span class="s1">&#39;chap10&#39;</span><span class="p">,</span>                <span class="s1">&#39;chap11&#39;</span><span class="p">,</span> <span class="s1">&#39;chap12&#39;</span><span class="p">],</span>
+  <span class="n">env</span><span class="o">.</span><span class="n">Clone</span><span class="p">(</span><span class="n">MCU</span><span class="o">=</span><span class="s1">&#39;33FJ64GP202&#39;</span><span class="p">),</span> <span class="s1">&#39;default&#39;</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<p>Minimally test the 24F16KA102. It has hardmapped UART pins.</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="n">buildTargetsSConscript</span><span class="p">([</span><span class="s1">&#39;reset&#39;</span><span class="p">,</span> <span class="s1">&#39;echo&#39;</span><span class="p">],</span>
+  <span class="n">env</span><span class="o">.</span><span class="n">Clone</span><span class="p">(</span><span class="n">MCU</span><span class="o">=</span><span class="s1">&#39;24F32KA302&#39;</span><span class="p">,</span> <span class="n">CPPDEFINES</span><span class="o">=</span><span class="s1">&#39;HARDWARE_PLATFORM=HARDMAPPED_UART&#39;</span><span class="p">),</span> <span class="s1">&#39;hardmappedUART&#39;</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<p>Build the PIC24HJ64GP502-compatible directories.</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="n">buildTargetsSConscript</span><span class="p">([</span><span class="s1">&#39;chap11&#39;</span><span class="p">,</span> <span class="s1">&#39;chap13&#39;</span><span class="p">,</span> <span class="s1">&#39;chap15&#39;</span><span class="p">],</span>
+  <span class="n">env</span><span class="o">.</span><span class="n">Clone</span><span class="p">(</span><span class="n">MCU</span><span class="o">=</span><span class="s1">&#39;24HJ64GP502&#39;</span><span class="p">),</span> <span class="s1">&#39;default&#39;</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<p>Same as above, but for a dsPIC</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="n">buildTargetsSConscript</span><span class="p">([</span><span class="s1">&#39;chap08&#39;</span><span class="p">,</span> <span class="s1">&#39;chap09&#39;</span><span class="p">,</span> <span class="s1">&#39;chap10&#39;</span><span class="p">,</span> <span class="s1">&#39;chap11&#39;</span><span class="p">,</span> <span class="s1">&#39;chap12&#39;</span><span class="p">,</span>
+                        <span class="s1">&#39;chap13&#39;</span><span class="p">,</span> <span class="s1">&#39;chap15&#39;</span><span class="p">],</span>
+  <span class="n">env</span><span class="o">.</span><span class="n">Clone</span><span class="p">(</span><span class="n">MCU</span><span class="o">=</span><span class="s1">&#39;33FJ128GP802&#39;</span><span class="p">),</span> <span class="s1">&#39;default&#39;</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<p>Same as above, but for the dsPIC33EP128GP502</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="n">buildTargetsSConscript</span><span class="p">([</span><span class="s1">&#39;chap08&#39;</span><span class="p">,</span> <span class="s1">&#39;chap09&#39;</span><span class="p">,</span> <span class="s1">&#39;chap10&#39;</span><span class="p">,</span> <span class="s1">&#39;chap12&#39;</span><span class="p">,</span>
+                        <span class="s1">&#39;chap13&#39;</span><span class="p">,</span> <span class="s1">&#39;chap15&#39;</span><span class="p">],</span>
+  <span class="n">env</span><span class="o">.</span><span class="n">Clone</span><span class="p">(</span><span class="n">MCU</span><span class="o">=</span><span class="s1">&#39;33EP128GP502&#39;</span><span class="p">),</span> <span class="s1">&#39;default&#39;</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<p>Build some for the PIC24E device</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="n">buildTargetsSConscript</span><span class="p">([</span><span class="s1">&#39;chap08&#39;</span><span class="p">,</span> <span class="s1">&#39;chap09&#39;</span><span class="p">,</span> <span class="s1">&#39;chap10&#39;</span><span class="p">,</span> <span class="s1">&#39;chap11&#39;</span><span class="p">,</span>  <span class="s1">&#39;chap12&#39;</span><span class="p">],</span>
+  <span class="n">env</span><span class="o">.</span><span class="n">Clone</span><span class="p">(</span><span class="n">MCU</span><span class="o">=</span><span class="s1">&#39;24EP64GP202&#39;</span><span class="p">),</span> <span class="s1">&#39;default&#39;</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+</div>
+<div class="section" id="build-over-various-hardware-platforms">
+<h3><a class="toc-backref" href="#id9">Build over various hardware platforms</a><a class="headerlink" href="#build-over-various-hardware-platforms" title="Permalink to this headline">¶</a></h3>
+<p>Same as above, but for the dsPIC33EP128GP502 on a MicroStickII target</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="n">buildTargetsSConscript</span><span class="p">([</span><span class="s1">&#39;chap08&#39;</span><span class="p">,</span> <span class="s1">&#39;chap09&#39;</span><span class="p">,</span> <span class="s1">&#39;chap10&#39;</span><span class="p">,</span> <span class="s1">&#39;chap12&#39;</span><span class="p">,</span>
+                        <span class="s1">&#39;chap13&#39;</span><span class="p">,</span> <span class="s1">&#39;chap15&#39;</span><span class="p">],</span>
+  <span class="n">env</span><span class="o">.</span><span class="n">Clone</span><span class="p">(</span><span class="n">MCU</span><span class="o">=</span><span class="s1">&#39;33EP128GP502&#39;</span><span class="p">,</span> <span class="n">CPPDEFINES</span><span class="o">=</span><span class="s1">&#39;HARDWARE_PLATFORM=MICROSTICK2&#39;</span><span class="p">),</span> <span class="s1">&#39;microstick2&#39;</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<p>Build some selected chapter applications for the chip used on the Fall 2013 Embedded systems board</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="n">buildTargetsSConscript</span><span class="p">([</span><span class="s1">&#39;chap08&#39;</span><span class="p">,</span> <span class="s1">&#39;chap09&#39;</span><span class="p">,</span> <span class="s1">&#39;chap13&#39;</span><span class="p">],</span>
+  <span class="n">env</span><span class="o">.</span><span class="n">Clone</span><span class="p">(</span><span class="n">MCU</span><span class="o">=</span><span class="s1">&#39;33EP128GP504&#39;</span><span class="p">,</span> <span class="n">CPPDEFINES</span><span class="o">=</span><span class="s1">&#39;HARDWARE_PLATFORM=EMBEDDED_C1&#39;</span><span class="p">),</span> <span class="s1">&#39;embeddedC1&#39;</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<p>Build some selected chapter applications for the CAN2 rev.F14 board used in ECE4723 Embedded Systems</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="n">buildTargetsSConscript</span><span class="p">([</span><span class="s1">&#39;chap08&#39;</span><span class="p">,</span> <span class="s1">&#39;chap09&#39;</span><span class="p">],</span>
+  <span class="n">env</span><span class="o">.</span><span class="n">Clone</span><span class="p">(</span><span class="n">MCU</span><span class="o">=</span><span class="s1">&#39;33EP512GP806&#39;</span><span class="p">,</span> <span class="n">CPPDEFINES</span><span class="o">=</span><span class="s1">&#39;HARDWARE_PLATFORM=EMBEDDED_F14&#39;</span><span class="p">),</span> <span class="s1">&#39;embeddedF14&#39;</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<p>Build for the explorer board</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="n">buildTargetsSConscript</span><span class="p">([</span><span class="s1">&#39;explorer&#39;</span><span class="p">],</span>
+  <span class="n">env</span><span class="o">.</span><span class="n">Clone</span><span class="p">(</span><span class="n">MCU</span><span class="o">=</span><span class="s1">&#39;24FJ128GA010&#39;</span><span class="p">,</span> <span class="n">CPPDEFINES</span><span class="o">=</span><span class="s1">&#39;HARDWARE_PLATFORM=EXPLORER16_100P&#39;</span><span class="p">),</span> <span class="s1">&#39;explorer16100p&#39;</span><span class="p">)</span>
+<span class="n">buildTargetsSConscript</span><span class="p">([</span><span class="s1">&#39;explorer&#39;</span><span class="p">],</span>
+  <span class="n">env</span><span class="o">.</span><span class="n">Clone</span><span class="p">(</span><span class="n">MCU</span><span class="o">=</span><span class="s1">&#39;24HJ256GP610&#39;</span><span class="p">,</span> <span class="n">CPPDEFINES</span><span class="o">=</span><span class="s1">&#39;HARDWARE_PLATFORM=EXPLORER16_100P&#39;</span><span class="p">),</span> <span class="s1">&#39;explorer16100p&#39;</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<p>Build reset on other supported platforms</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="n">buildTargetsSConscript</span><span class="p">([</span><span class="s1">&#39;reset&#39;</span><span class="p">],</span>
+  <span class="n">env</span><span class="o">.</span><span class="n">Clone</span><span class="p">(</span><span class="n">MCU</span><span class="o">=</span><span class="s1">&#39;24FJ64GA002&#39;</span><span class="p">,</span>  <span class="n">CPPDEFINES</span><span class="o">=</span><span class="s1">&#39;HARDWARE_PLATFORM=STARTER_BOARD_28P&#39;</span><span class="p">),</span> <span class="s1">&#39;starterboard28p&#39;</span><span class="p">)</span>
+<span class="n">buildTargetsSConscript</span><span class="p">([</span><span class="s1">&#39;reset&#39;</span><span class="p">],</span>
+  <span class="n">env</span><span class="o">.</span><span class="n">Clone</span><span class="p">(</span><span class="n">MCU</span><span class="o">=</span><span class="s1">&#39;33FJ128GP204&#39;</span><span class="p">,</span> <span class="n">CPPDEFINES</span><span class="o">=</span><span class="s1">&#39;HARDWARE_PLATFORM=DANGEROUS_WEB&#39;</span><span class="p">),</span> <span class="s1">&#39;dangerousweb&#39;</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+</div>
+<div class="section" id="build-over-various-clocks">
+<h3><a class="toc-backref" href="#id10">Build over various clocks</a><a class="headerlink" href="#build-over-various-clocks" title="Permalink to this headline">¶</a></h3>
+<p>Build reset with various clock options on all processors</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">clock</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;SIM_CLOCK&#39;</span><span class="p">,</span> <span class="s1">&#39;FRCPLL_FCY16MHz&#39;</span><span class="p">,</span> <span class="s1">&#39;FRC_FCY4MHz&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;PRI_NO_PLL_7372KHzCrystal&#39;</span><span class="p">,</span> <span class="s1">&#39;PRIPLL_8MHzCrystal_16MHzFCY&#39;</span><span class="p">]:</span>
+    <span class="n">buildTargetsSConscript</span><span class="p">([</span><span class="s1">&#39;reset&#39;</span><span class="p">],</span>
+      <span class="n">env</span><span class="o">.</span><span class="n">Clone</span><span class="p">(</span><span class="n">MCU</span><span class="o">=</span><span class="s1">&#39;24FJ64GA002&#39;</span><span class="p">,</span> <span class="n">CPPDEFINES</span><span class="o">=</span><span class="s1">&#39;CLOCK_CONFIG=&#39;</span> <span class="o">+</span> <span class="n">clock</span><span class="p">),</span> <span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">clock</span><span class="p">)</span>
+    <span class="n">buildTargetsSConscript</span><span class="p">([</span><span class="s1">&#39;reset&#39;</span><span class="p">],</span>
+      <span class="n">env</span><span class="o">.</span><span class="n">Clone</span><span class="p">(</span><span class="n">MCU</span><span class="o">=</span><span class="s1">&#39;24FJ64GA102&#39;</span><span class="p">,</span> <span class="n">CPPDEFINES</span><span class="o">=</span><span class="s1">&#39;CLOCK_CONFIG=&#39;</span> <span class="o">+</span> <span class="n">clock</span><span class="p">),</span> <span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">clock</span><span class="p">)</span>
+    <span class="n">buildTargetsSConscript</span><span class="p">([</span><span class="s1">&#39;reset&#39;</span><span class="p">],</span>
+      <span class="n">env</span><span class="o">.</span><span class="n">Clone</span><span class="p">(</span><span class="n">MCU</span><span class="o">=</span><span class="s1">&#39;24F32KA302&#39;</span><span class="p">,</span> <span class="n">CPPDEFINES</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CLOCK_CONFIG=&#39;</span> <span class="o">+</span> <span class="n">clock</span><span class="p">,</span> <span class="s1">&#39;HARDWARE_PLATFORM=HARDMAPPED_UART&#39;</span><span class="p">]),</span> <span class="s1">&#39;hardmappedUART&#39;</span><span class="p">,</span> <span class="n">clock</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">clock</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;SIM_CLOCK&#39;</span><span class="p">,</span> <span class="s1">&#39;PRI_NO_PLL_7372KHzCrystal&#39;</span><span class="p">,</span> <span class="s1">&#39;FRC_FCY3685KHz&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;FRCPLL_FCY40MHz&#39;</span><span class="p">,</span> <span class="s1">&#39;PRIPLL_7372KHzCrystal_40MHzFCY&#39;</span><span class="p">,</span> <span class="s1">&#39;PRIPLL_8MHzCrystal_40MHzFCY&#39;</span><span class="p">]:</span>
+    <span class="n">buildTargetsSConscript</span><span class="p">([</span><span class="s1">&#39;reset&#39;</span><span class="p">],</span>
+      <span class="n">env</span><span class="o">.</span><span class="n">Clone</span><span class="p">(</span><span class="n">MCU</span><span class="o">=</span><span class="s1">&#39;24HJ32GP202&#39;</span><span class="p">,</span>  <span class="n">CPPDEFINES</span><span class="o">=</span><span class="s1">&#39;CLOCK_CONFIG=&#39;</span> <span class="o">+</span> <span class="n">clock</span><span class="p">),</span> <span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">clock</span><span class="p">)</span>
+    <span class="n">buildTargetsSConscript</span><span class="p">([</span><span class="s1">&#39;reset&#39;</span><span class="p">],</span>
+      <span class="n">env</span><span class="o">.</span><span class="n">Clone</span><span class="p">(</span><span class="n">MCU</span><span class="o">=</span><span class="s1">&#39;33FJ128GP802&#39;</span><span class="p">,</span> <span class="n">CPPDEFINES</span><span class="o">=</span><span class="s1">&#39;CLOCK_CONFIG=&#39;</span> <span class="o">+</span> <span class="n">clock</span><span class="p">),</span> <span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">clock</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+</div>
+<div class="section" id="misc-builds">
+<h3><a class="toc-backref" href="#id11">Misc builds</a><a class="headerlink" href="#misc-builds" title="Permalink to this headline">¶</a></h3>
+<p>Do a no-float build of reset</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="n">buildTargetsSConscript</span><span class="p">([</span><span class="s1">&#39;reset&#39;</span><span class="p">],</span>
+  <span class="n">env</span><span class="o">.</span><span class="n">Clone</span><span class="p">(</span><span class="n">MCU</span><span class="o">=</span><span class="s1">&#39;24HJ32GP202&#39;</span><span class="p">,</span>  <span class="n">CPPDEFINES</span><span class="o">=</span><span class="s1">&#39;_NOFLOAT&#39;</span><span class="p">),</span> <span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="s1">&#39;nofloat&#39;</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="bootloader-builds">
+<h2><a class="toc-backref" href="#id12">Bootloader builds</a><a class="headerlink" href="#bootloader-builds" title="Permalink to this headline">¶</a></h2>
+<p>Call <a class="reference internal" href="SCons_bootloader.py.html"><span class="doc">SCons_bootloader.py - Build the bootloader</span></a> with a specific Environment. It creates a
+variant build named <code class="docutils literal"><span class="pre">bootloader</span> <span class="pre">_</span> <span class="pre">hardware_alias</span> <span class="pre">_</span> <span class="pre">MCU</span></code>.</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">buildTargetsBootloader</span><span class="p">(</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>The build environment to use. Typically <code class="docutils literal"><span class="pre">env</span></code>, though a <code class="docutils literal"><span class="pre">env.Clone</span></code>
+can be used to configure env.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">env</span><span class="p">,</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>The MCU to build the bootloader for.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">mcu</span><span class="p">,</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>The DEFINEd name of the target platform</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">hardware_platform</span> <span class="o">=</span> <span class="s1">&#39;DEFAULT_DESIGN&#39;</span><span class="p">,</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>The string to use in the target build directory name</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">hardware_alias</span> <span class="o">=</span> <span class="s1">&#39;default&#39;</span><span class="p">):</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>Create an environment for building the bootloader:
+1. Define the MCU and the target hardware platform</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>    <span class="n">env</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">Clone</span><span class="p">(</span><span class="n">MCU</span> <span class="o">=</span> <span class="n">mcu</span><span class="p">,</span> <span class="n">HW</span> <span class="o">=</span> <span class="n">hardware_alias</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><ol class="arabic simple" start="2">
+<li>Use the custom bootloader linker script.</li>
+</ol>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>    <span class="n">env</span><span class="o">.</span><span class="n">Replace</span><span class="p">(</span>
+        <span class="n">LINKERSCRIPT</span> <span class="o">=</span> <span class="s1">&#39;bootloader/pic24_dspic33_bootloader.X/lkr/p${MCU}.gld&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span><span class="n">CPPDEFINES</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;BOOTLOADER&#39;</span><span class="p">,</span> <span class="s1">&#39;HARDWARE_PLATFORM=&#39;</span> <span class="o">+</span> <span class="n">hardware_platform</span><span class="p">])</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>Now, invoke a variant build using this environment.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>    <span class="n">SConscript</span><span class="p">(</span><span class="s1">&#39;SCons_bootloader.py&#39;</span><span class="p">,</span> <span class="n">exports</span> <span class="o">=</span> <span class="s1">&#39;env bin2hex linker_side_effect&#39;</span><span class="p">,</span>
+      <span class="n">variant_dir</span> <span class="o">=</span> <span class="s1">&#39;build/bootloader_&#39;</span> <span class="o">+</span> <span class="n">hardware_alias</span> <span class="o">+</span> <span class="s1">&#39;_&#39;</span> <span class="o">+</span> <span class="n">mcu</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<p>Build the bootloader for a variety of common MCUs
+that can have UART in the “default” location, e.g.
+RB10=MCUrx and RB11=MCUtx</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">mcu</span> <span class="ow">in</span> <span class="p">(</span>
+    <span class="s1">&#39;24FJ32GA002&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;24FJ64GA002&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;24FJ32GA102&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;24FJ64GA102&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;24FJ64GB002&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;24FJ64GB004&#39;</span><span class="p">,</span>
+
+    <span class="s1">&#39;24HJ12GP202&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;24HJ32GP202&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;24HJ64GP502&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;24HJ128GP502&#39;</span><span class="p">,</span>
+
+    <span class="s1">&#39;24EP64GP202&#39;</span><span class="p">,</span>
+
+    <span class="s1">&#39;33FJ32GP202&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;33FJ128GP802&#39;</span><span class="p">,</span>
+
+    <span class="s1">&#39;33EP128GP502&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;33EP128GP504&#39;</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">buildTargetsBootloader</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">mcu</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<p>Build the bootloader for MCUs with a hardmapped UART.</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">mcu</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;24F32KA302&#39;</span><span class="p">,):</span>
+    <span class="n">buildTargetsBootloader</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">mcu</span><span class="p">,</span>
+    <span class="n">hardware_platform</span><span class="o">=</span><span class="s1">&#39;HARDMAPPED_UART&#39;</span><span class="p">,</span>
+    <span class="n">hardware_alias</span><span class="o">=</span><span class="s1">&#39;hardmappedUART&#39;</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<p>Build bootloader for MCUs on specific hardware platforms.</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="n">buildTargetsBootloader</span><span class="p">(</span><span class="n">env</span><span class="p">,</span>
+    <span class="n">mcu</span><span class="o">=</span><span class="s1">&#39;33EP128GP504&#39;</span><span class="p">,</span>
+    <span class="n">hardware_platform</span><span class="o">=</span><span class="s1">&#39;EMBEDDED_C1&#39;</span><span class="p">,</span>
+    <span class="n">hardware_alias</span><span class="o">=</span><span class="s1">&#39;embeddedC1&#39;</span><span class="p">)</span>
+
+<span class="n">buildTargetsBootloader</span><span class="p">(</span><span class="n">env</span><span class="p">,</span>
+    <span class="n">mcu</span><span class="o">=</span><span class="s1">&#39;33EP512GP806&#39;</span><span class="p">,</span>
+    <span class="n">hardware_platform</span><span class="o">=</span><span class="s1">&#39;EMBEDDED_F14&#39;</span><span class="p">,</span>
+    <span class="n">hardware_alias</span><span class="o">=</span><span class="s1">&#39;embeddedF14&#39;</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">mcu</span> <span class="ow">in</span> <span class="p">(</span>
+    <span class="s1">&#39;24FJ64GB002&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;24HJ128GP502&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;33EP128GP502&#39;</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">buildTargetsBootloader</span><span class="p">(</span><span class="n">env</span><span class="p">,</span>
+        <span class="n">mcu</span><span class="p">,</span>
+        <span class="n">hardware_platform</span><span class="o">=</span><span class="s1">&#39;MICROSTICK2&#39;</span><span class="p">,</span>
+        <span class="n">hardware_alias</span><span class="o">=</span><span class="s1">&#39;microstick2&#39;</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+</div>
+<div class="section" id="esos-builds">
+<h2><a class="toc-backref" href="#id13">ESOS builds</a><a class="headerlink" href="#esos-builds" title="Permalink to this headline">¶</a></h2>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">buildTargetsEsos</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">mcu</span><span class="p">,</span> <span class="n">hardware_platform</span> <span class="o">=</span> <span class="s1">&#39;DEFAULT_DESIGN&#39;</span><span class="p">,</span> <span class="n">hardware_alias</span> <span class="o">=</span> <span class="s1">&#39;default&#39;</span><span class="p">):</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>Create an environment for building ESOS.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>    <span class="n">env</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">Clone</span><span class="p">(</span><span class="n">MCU</span> <span class="o">=</span> <span class="n">mcu</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span><span class="n">CPPDEFINES</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;BUILT_ON_ESOS&#39;</span><span class="p">,</span> <span class="s1">&#39;HARDWARE_PLATFORM=&#39;</span> <span class="o">+</span> <span class="n">hardware_platform</span><span class="p">],</span>
+               <span class="n">CPPPATH</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;esos/include&#39;</span><span class="p">,</span> <span class="s1">&#39;esos/include/pic24&#39;</span><span class="p">])</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>Now, invoke a variant build using this environment.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>    <span class="n">SConscript</span><span class="p">(</span><span class="s1">&#39;SCons_esos.py&#39;</span><span class="p">,</span> <span class="n">exports</span> <span class="o">=</span> <span class="s1">&#39;env bin2hex linker_side_effect&#39;</span><span class="p">,</span>
+      <span class="n">variant_dir</span> <span class="o">=</span> <span class="s1">&#39;build/esos_&#39;</span> <span class="o">+</span> <span class="n">hardware_alias</span> <span class="o">+</span> <span class="s1">&#39;_&#39;</span> <span class="o">+</span> <span class="n">mcu</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<p>Build ESOS over a variety of chips
+that can have UART in the “default” location, e.g.
+RB10=MCUrx and RB11=MCUtx</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">mcu</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="s1">&#39;24HJ64GP202&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;24FJ64GA002&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;24HJ128GP502&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;24EP64GP202&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;33FJ64GP202&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;33FJ128GP802&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;33EP128GP502&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;33EP128GP504&#39;</span><span class="p">,</span>
+           <span class="p">):</span>
+    <span class="n">buildTargetsEsos</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">mcu</span><span class="p">)</span>
+
+<span class="n">buildTargetsEsos</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">mcu</span><span class="o">=</span><span class="s1">&#39;33EP128GP504&#39;</span><span class="p">,</span> <span class="n">hardware_platform</span><span class="o">=</span><span class="s1">&#39;EMBEDDED_C1&#39;</span><span class="p">,</span> <span class="n">hardware_alias</span><span class="o">=</span><span class="s1">&#39;embeddedC1&#39;</span><span class="p">)</span>
+<span class="n">buildTargetsEsos</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">mcu</span><span class="o">=</span><span class="s1">&#39;33EP512GP806&#39;</span><span class="p">,</span> <span class="n">hardware_platform</span><span class="o">=</span><span class="s1">&#39;EMBEDDED_F14&#39;</span><span class="p">,</span> <span class="n">hardware_alias</span><span class="o">=</span><span class="s1">&#39;embeddedF14&#39;</span><span class="p">)</span>
+<span class="n">buildTargetsEsos</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">mcu</span><span class="o">=</span><span class="s1">&#39;33EP128GP502&#39;</span><span class="p">,</span> <span class="n">hardware_platform</span><span class="o">=</span><span class="s1">&#39;MICROSTICK2&#39;</span><span class="p">,</span> <span class="n">hardware_alias</span><span class="o">=</span><span class="s1">&#39;microstick2&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="contents.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">SConstruct.py - Build all libraries and examples over many chips</a><ul>
+<li><a class="reference internal" href="#create-a-microchip-xc16-construction-environment">Create a Microchip XC16 Construction Environment</a><ul>
+<li><a class="reference internal" href="#create-a-bin2hex-builder">Create a bin2hex builder</a></li>
+<li><a class="reference internal" href="#linker-dependencies">Linker dependencies</a></li>
+<li><a class="reference internal" href="#command-line-options">Command-line options</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#definition-of-targets">Definition of targets</a></li>
+<li><a class="reference internal" href="#library-builds">Library builds</a><ul>
+<li><a class="reference internal" href="#build-over-various-mcus">Build over various MCUs</a></li>
+<li><a class="reference internal" href="#build-over-various-hardware-platforms">Build over various hardware platforms</a></li>
+<li><a class="reference internal" href="#build-over-various-clocks">Build over various clocks</a></li>
+<li><a class="reference internal" href="#misc-builds">Misc builds</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#bootloader-builds">Bootloader builds</a></li>
+<li><a class="reference internal" href="#esos-builds">ESOS builds</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="contents.html">Documentation overview</a><ul>
+  <li><a href="utilities.html">Utilities</a><ul>
+      <li>Previous: <a href="runscons.bat.html" title="previous chapter">runscons.bat - Run SCons, collecting and filtering warnings</a></li>
+      <li>Next: <a href="SCons_bootloader.py.html" title="next chapter">SCons_bootloader.py - Build the bootloader</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/SConstruct.py"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/SConstruct.py"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

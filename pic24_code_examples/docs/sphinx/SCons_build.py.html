@@ -1,0 +1,284 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>SCons_build.py - Build all libraries and examples &#8212; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 6-May-2015 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/CodeChat.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '6-May-2015',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: ''
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="SCons_esos.py - Build ESOS chapter 14 applications" href="SCons_esos.py.html" />
+    <link rel="prev" title="SCons_bootloader.py - Build the bootloader" href="SCons_bootloader.py.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <script type="text/javascript">document.addEventListener("DOMContentLoaded", function(event) {let walk_tree = function(elements,func_walk,func_child) {let walk_children = [];for (let index = 0; index < elements.length; ++index) {let that = elements[index];while (that && !func_walk(that)) {that = that.parentElement;}if (that) {that = func_walk(that);walk_children.push(that);while (that && func_child(that)) {that = func_child(that);walk_children.push(that);}}}return walk_children;};let code = document.getElementsByClassName("fenced-code");walk_tree(code, x => x.nextElementSibling, x => x.firstElementChild).map(x => {x.style.marginTop = 0;x.style.paddingTop = 0;});walk_tree(code, x => x.previousElementSibling, x => x.lastElementChild).map(x => {x.style.marginBottom = 0;x.style.paddingBottom = 0;});});</script><div class="section" id="scons-build-py-build-all-libraries-and-examples">
+<h1>SCons_build.py - Build all libraries and examples<a class="headerlink" href="#scons-build-py-build-all-libraries-and-examples" title="Permalink to this headline">¶</a></h1>
+<p>Given a build environment, this file performs specific builds
+using the PIC24 library. It should be called from an SCons script
+that exports:</p>
+<ul class="simple">
+<li>env: the build environment to use</li>
+<li>buildTargets: a list of strings specifying what to build
+(see if statements toward the end of this file).</li>
+</ul>
+<p>This file delegates to <a class="reference internal" href="templates/SConscript.py.html"><span class="doc">SConscript.py - Build source files from template</span></a> to build all
+templates.</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span> 
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="n">Import</span><span class="p">(</span><span class="s1">&#39;buildTargets env bin2hex linker_side_effect&#39;</span><span class="p">)</span>
+
+<span class="c1">## Inform SCons about the dependencies in the template-based files</span>
+<span class="n">SConscript</span><span class="p">(</span><span class="s1">&#39;templates/SConscript.py&#39;</span><span class="p">,</span> <span class="s1">&#39;env&#39;</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<div class="section" id="common-sources-used-for-the-pic24-support-library">
+<h2>Common sources used for the PIC24 support library<a class="headerlink" href="#common-sources-used-for-the-pic24-support-library" title="Permalink to this headline">¶</a></h2>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="n">PIC24SupportLibSources</span> <span class="o">=</span> <span class="p">[</span>
+  <span class="s1">&#39;lib/src/dataXfer.c&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;lib/src/dataXferImpl.c&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;lib/src/pic24_adc.c&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;lib/src/pic24_clockfreq.c&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;lib/src/pic24_configbits.c&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;lib/src/pic24_ecan.c&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;lib/src/pic24_flash.c&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;lib/src/pic24_i2c.c&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;lib/src/pic24_serial.c&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;lib/src/pic24_spi.c&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;lib/src/pic24_timer.c&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;lib/src/pic24_uart.c&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;lib/src/pic24_util.c&#39;</span> <span class="p">]</span>
+ 
+</pre></div>
+</div>
+</div>
+<div class="section" id="functions-used-to-build-the-library">
+<h2>Functions used to build the library<a class="headerlink" href="#functions-used-to-build-the-library" title="Permalink to this headline">¶</a></h2>
+<p>This function builds a program which includes the PIC24 library.</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">buildProgramWithCommonSources</span><span class="p">(</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>A list of source files to be built into one program.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">sourceFileList</span><span class="p">,</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>A list of source files upon which all sources
+in the sourceFileList depend. Wildcards are not
+supported.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">commonSources</span><span class="p">,</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>An Environment in which to build these sources.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">buildEnvironment</span><span class="p">,</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>A string to serve as an alias for this build.  commonSources,</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">aliasString</span><span class="p">):</span>
+
+  <span class="n">be</span> <span class="o">=</span> <span class="n">buildEnvironment</span>
+  <span class="n">p</span> <span class="o">=</span> <span class="n">be</span><span class="o">.</span><span class="n">Program</span><span class="p">(</span><span class="n">sourceFileList</span> <span class="o">+</span> <span class="n">commonSources</span><span class="p">)</span>
+  <span class="n">linker_side_effect</span><span class="p">(</span><span class="n">be</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>Pick the name of the target to be the first c file in the list</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">bin2hex</span><span class="p">(</span><span class="n">sourceFileList</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">be</span><span class="p">,</span> <span class="n">aliasString</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<p>This function takes a list of source files (including wildcards),
+adds the PIC24 common sources to each item, then uses Program to build each item.</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">buildWithCommonSources</span><span class="p">(</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>A list of source files (which may include
+wildcards) to be built.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">sourceFileList</span><span class="p">,</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>A list of source files upon which all sources
+in the sourceFileList depend. Wildcards are not
+supported.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">commonSources</span><span class="p">,</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>An Environment in which to build these sources.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">buildEnvironment</span><span class="p">,</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>A exceptionFileName={key=value pairs used to create the
+custom environment correpsonding to the
+exceptionFile} dict</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">exceptionDict</span><span class="p">,</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>A string to serve as an alias for this set of
+builds.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">aliasString</span><span class="p">):</span>
+
+  <span class="k">for</span> <span class="n">sourceFileGlob</span> <span class="ow">in</span> <span class="n">sourceFileList</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">sourceFile</span> <span class="ow">in</span> <span class="n">Glob</span><span class="p">(</span><span class="n">sourceFileGlob</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="bp">True</span><span class="p">):</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>See if this is an exception</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">if</span> <span class="n">sourceFile</span> <span class="ow">in</span> <span class="n">exceptionDict</span><span class="p">:</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:5.0em;"><p>Yes, so modify environment with dict of changes.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>          <span class="n">be</span> <span class="o">=</span> <span class="n">buildEnvironment</span><span class="o">.</span><span class="n">Clone</span><span class="p">()</span>
+          <span class="n">flags</span> <span class="o">=</span> <span class="n">exceptionDict</span><span class="p">[</span><span class="n">sourceFile</span><span class="p">]</span>
+<span class="c1">##          print flags</span>
+<span class="c1">##          be.MergeFlags(flags) # produces weird</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:5.0em;"><p>errors, so hand-code a simple alternative
+TODO: This overwrites flags, which is a BAD thing</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>          <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">flags</span><span class="p">:</span>
+            <span class="n">be</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="n">flags</span><span class="p">[</span><span class="n">a</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:5.0em;"><p>No, just use the existing environment</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>          <span class="n">be</span> <span class="o">=</span> <span class="n">buildEnvironment</span>
+        <span class="n">buildProgramWithCommonSources</span><span class="p">([</span><span class="n">sourceFile</span><span class="p">],</span> <span class="n">commonSources</span><span class="p">,</span> <span class="n">be</span><span class="p">,</span>
+          <span class="n">aliasString</span><span class="p">)</span>
+ 
+ 
+</pre></div>
+</div>
+<p>Compile the support library into objects for the default
+environment.</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="n">PIC24SupportLibObjects</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">Object</span><span class="p">(</span><span class="n">PIC24SupportLibSources</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+</div>
+<div class="section" id="definition-of-targets">
+<h2>Definition of targets<a class="headerlink" href="#definition-of-targets" title="Permalink to this headline">¶</a></h2>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="s1">&#39;reset&#39;</span> <span class="ow">in</span> <span class="n">buildTargets</span><span class="p">:</span>
+  <span class="n">buildWithCommonSources</span><span class="p">([</span><span class="s1">&#39;chap08/reset.c&#39;</span><span class="p">],</span> <span class="n">PIC24SupportLibObjects</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="p">{},</span> <span class="s1">&#39;reset&#39;</span><span class="p">)</span>
+<span class="k">if</span> <span class="s1">&#39;chap08&#39;</span> <span class="ow">in</span> <span class="n">buildTargets</span><span class="p">:</span>
+  <span class="n">buildWithCommonSources</span><span class="p">([</span><span class="s1">&#39;chap08/*.c&#39;</span><span class="p">],</span> <span class="n">PIC24SupportLibObjects</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="p">{},</span> <span class="s1">&#39;chap08&#39;</span><span class="p">)</span>
+<span class="k">if</span> <span class="s1">&#39;chap09&#39;</span> <span class="ow">in</span> <span class="n">buildTargets</span><span class="p">:</span>
+  <span class="n">buildWithCommonSources</span><span class="p">([</span><span class="s1">&#39;chap09/*.c&#39;</span><span class="p">],</span> <span class="n">PIC24SupportLibObjects</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="p">{},</span> <span class="s1">&#39;chap09&#39;</span><span class="p">)</span>
+<span class="k">if</span> <span class="s1">&#39;chap10&#39;</span> <span class="ow">in</span> <span class="n">buildTargets</span><span class="p">:</span>
+  <span class="n">buildWithCommonSources</span><span class="p">([</span><span class="s1">&#39;chap10/*.c&#39;</span><span class="p">],</span>
+    <span class="n">PIC24SupportLibObjects</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span>
+    <span class="p">{</span><span class="s1">&#39;chap10</span><span class="se">\\</span><span class="s1">reverse_string.c&#39;</span>  <span class="p">:</span> <span class="p">{</span> <span class="s1">&#39;CPPDEFINES&#39;</span><span class="p">:</span> <span class="s1">&#39;UART1_RX_INTERRUPT&#39;</span><span class="p">},</span>
+     <span class="s1">&#39;chap10</span><span class="se">\\</span><span class="s1">reverse_string1.c&#39;</span> <span class="p">:</span> <span class="p">{</span> <span class="s1">&#39;CPPDEFINES&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;UART1_RX_INTERRUPT&#39;</span><span class="p">,</span> <span class="s1">&#39;UART1_TX_INTERRUPT&#39;</span><span class="p">]}},</span>
+    <span class="s1">&#39;chap10&#39;</span><span class="p">)</span>
+<span class="k">if</span> <span class="s1">&#39;chap11&#39;</span> <span class="ow">in</span> <span class="n">buildTargets</span><span class="p">:</span>
+  <span class="n">buildWithCommonSources</span><span class="p">([</span><span class="s1">&#39;chap11/*.c&#39;</span><span class="p">],</span> <span class="n">PIC24SupportLibObjects</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="p">{},</span> <span class="s1">&#39;chap11&#39;</span><span class="p">)</span>
+<span class="k">if</span> <span class="s1">&#39;chap12&#39;</span> <span class="ow">in</span> <span class="n">buildTargets</span><span class="p">:</span>
+  <span class="n">buildWithCommonSources</span><span class="p">([</span><span class="s1">&#39;chap12/*.c&#39;</span><span class="p">],</span> <span class="n">PIC24SupportLibSources</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="p">{},</span> <span class="s1">&#39;chap12&#39;</span><span class="p">)</span>
+<span class="k">if</span> <span class="s1">&#39;chap13&#39;</span> <span class="ow">in</span> <span class="n">buildTargets</span><span class="p">:</span>
+  <span class="n">buildWithCommonSources</span><span class="p">([</span><span class="s1">&#39;chap13/*.c&#39;</span><span class="p">],</span> <span class="n">PIC24SupportLibObjects</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span>
+  <span class="p">{</span><span class="s1">&#39;chap13</span><span class="se">\\</span><span class="s1">i2c_multmaster_rstring.c&#39;</span> <span class="p">:</span>  <span class="p">{</span> <span class="s1">&#39;CPPDEFINES&#39;</span><span class="p">:</span> <span class="s1">&#39;CPU_ID=1&#39;</span> <span class="p">},</span>
+   <span class="s1">&#39;chap13</span><span class="se">\\</span><span class="s1">i2c_multmaster_rstring1.c&#39;</span> <span class="p">:</span> <span class="p">{</span> <span class="s1">&#39;CPPDEFINES&#39;</span><span class="p">:</span> <span class="s1">&#39;CPU_ID=2&#39;</span> <span class="p">}},</span>
+  <span class="s1">&#39;chap13&#39;</span><span class="p">)</span>
+<span class="k">if</span> <span class="s1">&#39;chap15&#39;</span> <span class="ow">in</span> <span class="n">buildTargets</span><span class="p">:</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>Currently, no files.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="k">pass</span>
+<span class="k">if</span> <span class="s1">&#39;explorer&#39;</span> <span class="ow">in</span> <span class="n">buildTargets</span><span class="p">:</span>
+  <span class="n">buildWithCommonSources</span><span class="p">([</span><span class="s1">&#39;explorer16_100p/*.c&#39;</span><span class="p">],</span> <span class="n">PIC24SupportLibObjects</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="p">{},</span> <span class="s1">&#39;explorer&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="contents.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">SCons_build.py - Build all libraries and examples</a><ul>
+<li><a class="reference internal" href="#common-sources-used-for-the-pic24-support-library">Common sources used for the PIC24 support library</a></li>
+<li><a class="reference internal" href="#functions-used-to-build-the-library">Functions used to build the library</a></li>
+<li><a class="reference internal" href="#definition-of-targets">Definition of targets</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="contents.html">Documentation overview</a><ul>
+  <li><a href="utilities.html">Utilities</a><ul>
+  <li><a href="SConstruct.py.html">SConstruct.py - Build all libraries and examples over many chips</a><ul>
+      <li>Previous: <a href="SCons_bootloader.py.html" title="previous chapter">SCons_bootloader.py - Build the bootloader</a></li>
+      <li>Next: <a href="SCons_esos.py.html" title="next chapter">SCons_esos.py - Build ESOS chapter 14 applications</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/SCons_build.py"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/SCons_build.py"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

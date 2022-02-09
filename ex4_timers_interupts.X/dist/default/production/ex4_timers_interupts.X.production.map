@@ -1,0 +1,108 @@
+Microchip Technology Inc, v1.70 (B)
+
+Tool Name:
+  /opt/microchip/xc16/v1.70/bin/bin/../bin/elf-ld
+
+Command:
+  -p24HJ128GP502 \
+  --mdfp=/opt/microchip/mplabx/v5.50/packs/Microchip/dsPIC33F-GP-MC_DFP/1.3.64/xc16 \
+  -o \
+  dist/default/production/ex4_timers_interupts.X.production.elf \
+  -L/opt/microchip/xc16/v1.70/bin/bin/.. \
+  -L/opt/microchip/mplabx/v5.50/packs/Microchip/dsPIC33F-GP-MC_DFP/1.3.64/xc16/bin/../support/PIC24H/gld \
+  -L/opt/microchip/mplabx/v5.50/packs/Microchip/dsPIC33F-GP-MC_DFP/1.3.64/xc16/bin/../support/dsPIC33F/gld \
+  -L/opt/microchip/xc16/v1.70/bin/bin/../../lib \
+  -L/opt/microchip/xc16/v1.70/bin/bin/../../support/PIC24E/gld \
+  -L/opt/microchip/xc16/v1.70/bin/bin/../../support/PIC24F/gld \
+  -L/opt/microchip/xc16/v1.70/bin/bin/../../support/PIC24H/gld \
+  -L/opt/microchip/xc16/v1.70/bin/bin/../../support/dsPIC30F/gld \
+  -L/opt/microchip/xc16/v1.70/bin/bin/../../support/dsPIC33C/gld \
+  -L/opt/microchip/xc16/v1.70/bin/bin/../../support/dsPIC33E/gld \
+  -L/opt/microchip/xc16/v1.70/bin/bin/../../support/dsPIC33F/gld \
+  build/default/production/_ext/1815454428/pic24_timer.o \
+  build/default/production/_ext/1815454428/dataXfer.o \
+  build/default/production/_ext/1815454428/pic24_util.o \
+  build/default/production/_ext/1815454428/dataXferImpl.o \
+  build/default/production/_ext/1815454428/pic24_flash.o \
+  build/default/production/_ext/1815454428/pic24_spi.o \
+  build/default/production/_ext/1815454428/pic24_i2c.o \
+  build/default/production/_ext/1815454428/pic24_ecan.o \
+  build/default/production/_ext/1815454428/pic24_configbits.o \
+  build/default/production/_ext/1815454428/pic24_serial.o \
+  build/default/production/_ext/1815454428/pic24_adc.o \
+  build/default/production/_ext/1815454428/pic24_clockfreq.o \
+  build/default/production/_ext/1815454428/pic24_uart.o \
+  build/default/production/_ext/1815454428/pic24_stdio_uart.o \
+  build/default/production/_ext/1472/main_t2_blink.o \
+  build/default/production/_ext/1472/main_t2_blink_interrupts.o \
+  --defsym=__MPLAB_BUILD=1 \
+  -Tp24HJ128GP502.gld.00 \
+  --stack=16 \
+  --check-sections \
+  --data-init \
+  --pack-data \
+  --handles \
+  --isr \
+  --no-gc-sections \
+  --fill-upper=0 \
+  --stackguard=16 \
+  --no-force-link \
+  --smart-io \
+  -Map=dist/default/production/ex4_timers_interupts.X.production.map \
+  --report-mem \
+  --memorysummary \
+  dist/default/production/memoryfile.xml \
+  -start-group \
+  --library=lega-pic30-elf \
+  --library=m-elf \
+  --library=lega-c-elf \
+  -end-group \
+
+
+Optional library libp24HJ128GP502.a not found
+Archive member included because of file (symbol)
+
+/opt/microchip/xc16/v1.70/bin/bin/../../lib/liblega-pic30-elf.a(crt0_standard.o)
+                              (__resetPRI)
+/opt/microchip/xc16/v1.70/bin/bin/../../lib/liblega-pic30-elf.a(data_init_standard.o)
+                              /opt/microchip/xc16/v1.70/bin/bin/../../lib/liblega-pic30-elf.a(crt0_standard.o) (__data_init_standard)
+/opt/microchip/xc16/v1.70/bin/bin/../../lib/liblega-pic30-elf.a(crt_start_mode_normal.Leo)
+                              (__crt_start_mode_normal)
+/opt/microchip/xc16/v1.70/bin/bin/../../lib/liblega-pic30-elf.a(c30_uart.Leo)
+                              build/default/production/_ext/1815454428/pic24_serial.o (___C30_UART)
+/opt/microchip/xc16/v1.70/bin/bin/../../lib/liblega-pic30-elf.a(delay32.Leo)
+                              build/default/production/_ext/1815454428/pic24_clockfreq.o (___delay32)
+/opt/microchip/xc16/v1.70/bin/bin/../../lib/libm-elf.a(addsf3.eo)
+                              build/default/production/_ext/1815454428/pic24_util.o (___subsf3)
+/opt/microchip/xc16/v1.70/bin/bin/../../lib/libm-elf.a(divsf3.eo)
+                              build/default/production/_ext/1815454428/pic24_timer.o (___divsf3)
+/opt/microchip/xc16/v1.70/bin/bin/../../lib/libm-elf.a(divsi3.eo)
+                              build/default/production/_ext/1815454428/pic24_i2c.o (___divsi3)
+/opt/microchip/xc16/v1.70/bin/bin/../../lib/libm-elf.a(feqltle.eo)
+                              build/default/production/_ext/1815454428/pic24_timer.o (___ltsf2)
+/opt/microchip/xc16/v1.70/bin/bin/../../lib/libm-elf.a(fgtge.eo)
+                              build/default/production/_ext/1815454428/dataXfer.o (___gesf2)
+/opt/microchip/xc16/v1.70/bin/bin/../../lib/libm-elf.a(fixunssfsi.eo)
+                              build/default/production/_ext/1815454428/pic24_util.o (___fixunssfsi)
+/opt/microchip/xc16/v1.70/bin/bin/../../lib/libm-elf.a(floatunsisf.eo)
+                              build/default/production/_ext/1815454428/pic24_timer.o (___floatunsisf)
+/opt/microchip/xc16/v1.70/bin/bin/../../lib/libm-elf.a(fpack.eo)
+                              /opt/microchip/xc16/v1.70/bin/bin/../../lib/libm-elf.a(addsf3.eo) (__fpack)
+/opt/microchip/xc16/v1.70/bin/bin/../../lib/libm-elf.a(funpack.eo)
+                              /opt/microchip/xc16/v1.70/bin/bin/../../lib/libm-elf.a(fixunssfsi.eo) (__funpack)
+/opt/microchip/xc16/v1.70/bin/bin/../../lib/libm-elf.a(funpack2.eo)
+                              /opt/microchip/xc16/v1.70/bin/bin/../../lib/libm-elf.a(addsf3.eo) (__funpack2)
+/opt/microchip/xc16/v1.70/bin/bin/../../lib/libm-elf.a(futil.eo)
+                              /opt/microchip/xc16/v1.70/bin/bin/../../lib/libm-elf.a(addsf3.eo) (__fPropagateNaN)
+/opt/microchip/xc16/v1.70/bin/bin/../../lib/libm-elf.a(mulsf3.eo)
+                              build/default/production/_ext/1815454428/pic24_timer.o (___mulsf3)
+/opt/microchip/xc16/v1.70/bin/bin/../../lib/libm-elf.a(udivsi3.eo)
+                              /opt/microchip/xc16/v1.70/bin/bin/../../lib/libm-elf.a(divsi3.eo) (___udivsi3)
+/opt/microchip/xc16/v1.70/bin/bin/../../lib/libm-elf.a(fcompare.eo)
+                              /opt/microchip/xc16/v1.70/bin/bin/../../lib/libm-elf.a(feqltle.eo) (__fcompare)
+/opt/microchip/xc16/v1.70/bin/bin/../../lib/libm-elf.a(floatundisf.eo)
+                              /opt/microchip/xc16/v1.70/bin/bin/../../lib/libm-elf.a(floatunsisf.eo) (___floatundisf)
+/opt/microchip/xc16/v1.70/bin/bin/../../lib/liblega-c-elf.a(memset.XX_eo)
+                              build/default/production/_ext/1815454428/dataXferImpl.o (_memset)
+/opt/microchip/xc16/v1.70/bin/bin/../../lib/liblega-c-elf.a(strlen.XX_eo)
+                              build/default/production/_ext/1815454428/dataXfer.o (_strlen)

@@ -1,0 +1,356 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>compect_csv.py - Group all processors with identical mappings together &#8212; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 6-May-2015 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/CodeChat.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '6-May-2015',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: ''
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="dataXfer_test.c - Runs unit tests on PIC data transfor protocol" href="../util/dataXfer_test.c.html" />
+    <link rel="prev" title="data_sheet_to_csv.py - GUI to assist in translating Microchip data sheets to pin mappings" href="data_sheet_to_csv.py.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <script type="text/javascript">document.addEventListener("DOMContentLoaded", function(event) {let walk_tree = function(elements,func_walk,func_child) {let walk_children = [];for (let index = 0; index < elements.length; ++index) {let that = elements[index];while (that && !func_walk(that)) {that = that.parentElement;}if (that) {that = func_walk(that);walk_children.push(that);while (that && func_child(that)) {that = func_child(that);walk_children.push(that);}}}return walk_children;};let code = document.getElementsByClassName("fenced-code");walk_tree(code, x => x.nextElementSibling, x => x.firstElementChild).map(x => {x.style.marginTop = 0;x.style.paddingTop = 0;});walk_tree(code, x => x.previousElementSibling, x => x.lastElementChild).map(x => {x.style.marginBottom = 0;x.style.paddingBottom = 0;});});</script><div class="section" id="compect-csv-py-group-all-processors-with-identical-mappings-together">
+<h1>compect_csv.py - Group all processors with identical mappings together<a class="headerlink" href="#compect-csv-py-group-all-processors-with-identical-mappings-together" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="from-https-gist-github-com-samuraisam-901117">
+<h2>From <a class="reference external" href="https://gist.github.com/samuraisam/901117">https://gist.github.com/samuraisam/901117</a><a class="headerlink" href="#from-https-gist-github-com-samuraisam-901117" title="Permalink to this headline">¶</a></h2>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">datetime</span><span class="o">,</span> <span class="nn">time</span><span class="o">,</span> <span class="nn">functools</span><span class="o">,</span> <span class="nn">operator</span><span class="o">,</span> <span class="nn">types</span>
+
+<span class="n">default_fudge</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">microseconds</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">days</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">deep_eq</span><span class="p">(</span><span class="n">_v1</span><span class="p">,</span> <span class="n">_v2</span><span class="p">,</span> <span class="n">datetime_fudge</span><span class="o">=</span><span class="n">default_fudge</span><span class="p">,</span> <span class="n">_assert</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>Tests for deep equality between two python data structures recursing
+into sub-structures if necessary. Works with all python types including
+iterators and generators. This function was dreampt up to test API responses
+but could be used for anything. Be careful. With deeply nested structures
+you may blow the stack.</p>
+<dl class="docutils">
+<dt>Options:</dt>
+<dd><dl class="first last docutils">
+<dt>datetime_fudge =&gt; this is a datetime.timedelta object which, when</dt>
+<dd>comparing dates, will accept values that differ
+by the number of seconds specified</dd>
+<dt>_assert        =&gt; passing yes for this will raise an assertion error</dt>
+<dd>when values do not match, instead of returning
+false (very useful in combination with pdb)</dd>
+</dl>
+</dd>
+</dl>
+<p>Doctests included:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="s1">&#39;b&#39;</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="s1">&#39;b&#39;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">deep_eq</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="s1">&#39;b&#39;</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="s1">&#39;a&#39;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">deep_eq</span><span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">)</span>
+<span class="go">False</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x3</span><span class="p">,</span> <span class="n">y3</span> <span class="o">=</span> <span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="s1">&#39;c&#39;</span><span class="p">}},</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="s1">&#39;c&#39;</span><span class="p">}})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">deep_eq</span><span class="p">(</span><span class="n">x3</span><span class="p">,</span> <span class="n">y3</span><span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x4</span><span class="p">,</span> <span class="n">y4</span> <span class="o">=</span> <span class="p">({</span><span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="s1">&#39;t&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="s1">&#39;c&#39;</span><span class="p">}},</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="s1">&#39;n&#39;</span><span class="p">},</span> <span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="s1">&#39;t&#39;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">deep_eq</span><span class="p">(</span><span class="n">x4</span><span class="p">,</span> <span class="n">y4</span><span class="p">)</span>
+<span class="go">False</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x5</span><span class="p">,</span> <span class="n">y5</span> <span class="o">=</span> <span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]},</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">deep_eq</span><span class="p">(</span><span class="n">x5</span><span class="p">,</span> <span class="n">y5</span><span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x6</span><span class="p">,</span> <span class="n">y6</span> <span class="o">=</span> <span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;b&#39;</span><span class="p">,</span><span class="mi">8</span><span class="p">]},</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="s1">&#39;b&#39;</span><span class="p">,</span><span class="mi">8</span><span class="p">]})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">deep_eq</span><span class="p">(</span><span class="n">x6</span><span class="p">,</span> <span class="n">y6</span><span class="p">)</span>
+<span class="go">False</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x7</span><span class="p">,</span> <span class="n">y7</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">deep_eq</span><span class="p">(</span><span class="n">x7</span><span class="p">,</span> <span class="n">y7</span><span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x8</span><span class="p">,</span> <span class="n">y8</span> <span class="o">=</span> <span class="p">([</span><span class="s1">&#39;p&#39;</span><span class="p">,</span><span class="s1">&#39;n&#39;</span><span class="p">,[</span><span class="s1">&#39;asdf&#39;</span><span class="p">]],</span> <span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">,</span><span class="s1">&#39;n&#39;</span><span class="p">,[</span><span class="s1">&#39;asdf&#39;</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">deep_eq</span><span class="p">(</span><span class="n">x8</span><span class="p">,</span> <span class="n">y8</span><span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x9</span><span class="p">,</span> <span class="n">y9</span> <span class="o">=</span> <span class="p">([</span><span class="s1">&#39;p&#39;</span><span class="p">,</span><span class="s1">&#39;n&#39;</span><span class="p">,[</span><span class="s1">&#39;asdf&#39;</span><span class="p">,[</span><span class="s1">&#39;omg&#39;</span><span class="p">]]],</span> <span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">,</span> <span class="s1">&#39;n&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;asdf&#39;</span><span class="p">,[</span><span class="s1">&#39;nowai&#39;</span><span class="p">]]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">deep_eq</span><span class="p">(</span><span class="n">x9</span><span class="p">,</span> <span class="n">y9</span><span class="p">)</span>
+<span class="go">False</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x10</span><span class="p">,</span> <span class="n">y10</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">deep_eq</span><span class="p">(</span><span class="n">x10</span><span class="p">,</span> <span class="n">y10</span><span class="p">)</span>
+<span class="go">False</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">deep_eq</span><span class="p">((</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">10</span><span class="p">)),</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">10</span><span class="p">)))</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">str</span><span class="p">(</span><span class="n">deep_eq</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)))</span>
+<span class="go">&#39;True&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">deep_eq</span><span class="p">(</span><span class="nb">xrange</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">100</span><span class="p">))</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">deep_eq</span><span class="p">(</span><span class="nb">xrange</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+<span class="go">False</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">datetime</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span> <span class="k">as</span> <span class="n">dt</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d1</span><span class="p">,</span> <span class="n">d2</span> <span class="o">=</span> <span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span> <span class="n">dt</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">deep_eq</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="n">d2</span><span class="p">)</span>
+<span class="go">False</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">deep_eq</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="n">d2</span><span class="p">,</span> <span class="n">datetime_fudge</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">5</span><span class="p">))</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="n">_deep_eq</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">deep_eq</span><span class="p">,</span> <span class="n">datetime_fudge</span><span class="o">=</span><span class="n">datetime_fudge</span><span class="p">,</span>
+                               <span class="n">_assert</span><span class="o">=</span><span class="n">_assert</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">_check_assert</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">_assert</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">R</span><span class="p">:</span>
+      <span class="k">assert</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;an assertion has failed in deep_eq (</span><span class="si">%s</span><span class="s2">) </span><span class="si">%s</span><span class="s2"> != </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+        <span class="n">reason</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">R</span>
+
+  <span class="k">def</span> <span class="nf">_deep_dict_eq</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="n">d2</span><span class="p">):</span>
+    <span class="n">k1</span><span class="p">,</span> <span class="n">k2</span> <span class="o">=</span> <span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">d1</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">d2</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+    <span class="k">if</span> <span class="n">k1</span> <span class="o">!=</span> <span class="n">k2</span><span class="p">:</span> <span class="c1"># keys should be exactly equal</span>
+      <span class="k">return</span> <span class="n">_check_assert</span><span class="p">(</span><span class="bp">False</span><span class="p">,</span> <span class="n">k1</span><span class="p">,</span> <span class="n">k2</span><span class="p">,</span> <span class="s2">&quot;keys&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">_check_assert</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">_deep_eq</span><span class="p">(</span><span class="n">d1</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">d2</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+                                       <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k1</span><span class="p">),</span>
+                                     <span class="nb">len</span><span class="p">(</span><span class="n">k1</span><span class="p">)),</span> <span class="n">d1</span><span class="p">,</span> <span class="n">d2</span><span class="p">,</span> <span class="s2">&quot;dictionaries&quot;</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">_deep_iter_eq</span><span class="p">(</span><span class="n">l1</span><span class="p">,</span> <span class="n">l2</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">l1</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">l2</span><span class="p">):</span>
+      <span class="k">return</span> <span class="n">_check_assert</span><span class="p">(</span><span class="bp">False</span><span class="p">,</span> <span class="n">l1</span><span class="p">,</span> <span class="n">l2</span><span class="p">,</span> <span class="s2">&quot;lengths&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_check_assert</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">_deep_eq</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">)</span>
+                                      <span class="k">for</span> <span class="n">v1</span><span class="p">,</span> <span class="n">v2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">l1</span><span class="p">,</span> <span class="n">l2</span><span class="p">)),</span>
+                                     <span class="nb">len</span><span class="p">(</span><span class="n">l1</span><span class="p">)),</span> <span class="n">l1</span><span class="p">,</span> <span class="n">l2</span><span class="p">,</span> <span class="s2">&quot;iterables&quot;</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">op</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="n">_op</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">eq</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">==</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">==</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">:</span>
+      <span class="n">s</span> <span class="o">=</span> <span class="n">datetime_fudge</span><span class="o">.</span><span class="n">seconds</span>
+      <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span> <span class="o">=</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">mktime</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">timetuple</span><span class="p">()),</span> <span class="n">time</span><span class="o">.</span><span class="n">mktime</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">timetuple</span><span class="p">()))</span>
+      <span class="n">l</span> <span class="o">=</span> <span class="n">t1</span> <span class="o">-</span> <span class="n">t2</span>
+      <span class="n">l</span> <span class="o">=</span> <span class="o">-</span><span class="n">l</span> <span class="k">if</span> <span class="n">l</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">l</span>
+      <span class="k">return</span> <span class="n">_check_assert</span><span class="p">((</span><span class="o">-</span><span class="n">s</span> <span class="k">if</span> <span class="n">s</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">s</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">l</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="s2">&quot;dates&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_check_assert</span><span class="p">(</span><span class="n">_op</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="s2">&quot;values&quot;</span><span class="p">)</span>
+
+  <span class="n">c1</span><span class="p">,</span> <span class="n">c2</span> <span class="o">=</span> <span class="p">(</span><span class="n">_v1</span><span class="p">,</span> <span class="n">_v2</span><span class="p">)</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>guard against strings because they are iterable and their
+elements yield iterables infinitely.
+I N C E P T I O N</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>  <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">types</span><span class="o">.</span><span class="n">StringTypes</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_v1</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+      <span class="k">break</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_v1</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">DictType</span><span class="p">):</span>
+      <span class="n">op</span> <span class="o">=</span> <span class="n">_deep_dict_eq</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">try</span><span class="p">:</span>
+        <span class="n">c1</span><span class="p">,</span> <span class="n">c2</span> <span class="o">=</span> <span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">_v1</span><span class="p">)),</span> <span class="nb">list</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">_v2</span><span class="p">)))</span>
+      <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+        <span class="n">c1</span><span class="p">,</span> <span class="n">c2</span> <span class="o">=</span> <span class="n">_v1</span><span class="p">,</span> <span class="n">_v2</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">op</span> <span class="o">=</span> <span class="n">_deep_iter_eq</span>
+
+  <span class="k">return</span> <span class="n">op</span><span class="p">(</span><span class="n">c1</span><span class="p">,</span> <span class="n">c2</span><span class="p">)</span>
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+</pre></div>
+</div>
+</div>
+<div class="section" id="code-for-this-program">
+<h2>Code for this program<a class="headerlink" href="#code-for-this-program" title="Permalink to this headline">¶</a></h2>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">csv</span>
+ 
+</pre></div>
+</div>
+<p>Enumerate all ports on a PIC24 processor, returning the result as a list.</p>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">enumeratePic24Ports</span><span class="p">():</span>
+    <span class="n">port_letters</span> <span class="o">=</span> <span class="p">[</span><span class="nb">chr</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="p">),</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;K&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>The PIC series doesn’t have port I.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>    <span class="n">port_letters</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">j</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">port_letters</span>
+                       <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">16</span><span class="p">)]</span>
+ 
+</pre></div>
+</div>
+<p>This routine builds pic24_ports_tables.h from a template. To do so:</p>
+<ol class="arabic simple">
+<li>Open the output file and write out the header.</li>
+<li>Load in the CSV file containing pin information:<ol class="arabic">
+<li>Load three rows; they should be labeled xxx RPy, xxx ANn, and xxx CNm, where xxx is the processor.</li>
+<li>For each Rxy value:<ol class="arabic">
+<li>For F/H devices: look at the corresponding RPy, ANn, and CNm. If any are non-empty, write a table entry.</li>
+<li>For E devices: Write a #define for RPy or ANn if either are non-empty.</li>
+</ol>
+</li>
+</ol>
+</li>
+<li>Write out the footer.</li>
+</ol>
+<div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">genTablesFromTemplate</span><span class="p">(</span><span class="n">csvFileName</span><span class="p">,</span> <span class="n">destFileName</span><span class="p">):</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>Read in the CSV containing device information.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>    <span class="n">processors</span> <span class="o">=</span> <span class="p">{</span> <span class="p">}</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">csvFileName</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">csvFile</span><span class="p">:</span>
+        <span class="n">csv_dict_reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">(</span><span class="n">csvFile</span><span class="p">)</span><span class="o">.</span><span class="fm">__iter__</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:4.0em;"><p>Walk through the file</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:6.0em;"><p>Read three rows</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>            <span class="k">try</span><span class="p">:</span>
+                <span class="n">RPy</span> <span class="o">=</span> <span class="n">csv_dict_reader</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+                <span class="n">ANn</span> <span class="o">=</span> <span class="n">csv_dict_reader</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+                <span class="n">CNm</span> <span class="o">=</span> <span class="n">csv_dict_reader</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                <span class="k">break</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:6.0em;"><p>Get processor information and remove it (to avoid breaking the comparisons)</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>            <span class="n">processor_name</span> <span class="o">=</span> <span class="n">RPy</span><span class="p">[</span><span class="s1">&#39;Device port / pin&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span>
+            <span class="k">del</span> <span class="n">RPy</span><span class="p">[</span><span class="s1">&#39;Device port / pin&#39;</span><span class="p">]</span>
+            <span class="k">del</span> <span class="n">ANn</span><span class="p">[</span><span class="s1">&#39;Device port / pin&#39;</span><span class="p">]</span>
+            <span class="k">del</span> <span class="n">CNm</span><span class="p">[</span><span class="s1">&#39;Device port / pin&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:6.0em;"><p>Look for a duplicate</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>            <span class="n">processor_value</span> <span class="o">=</span> <span class="p">(</span><span class="n">RPy</span><span class="p">,</span> <span class="n">ANn</span><span class="p">,</span> <span class="n">CNm</span><span class="p">)</span>
+            <span class="n">found</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="k">for</span> <span class="n">processor</span> <span class="ow">in</span> <span class="n">processors</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">deep_eq</span><span class="p">(</span><span class="n">processors</span><span class="p">[</span><span class="n">processor</span><span class="p">],</span> <span class="n">processor_value</span><span class="p">):</span>
+                    <span class="c1">#print(&quot;%s duplicates %s.&quot; % (processor, processor_name))</span>
+                    <span class="n">found</span> <span class="o">=</span> <span class="bp">True</span>
+                    <span class="n">processors</span><span class="p">[</span><span class="n">processor</span> <span class="o">+</span> <span class="s1">&#39; &#39;</span> <span class="o">+</span> <span class="n">processor_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">processor_value</span>
+                    <span class="k">del</span> <span class="n">processors</span><span class="p">[</span><span class="n">processor</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span>
+                <span class="n">processors</span><span class="p">[</span><span class="n">processor_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">processor_value</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>Open the output file.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>    <span class="c1">#print(processors)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">destFileName</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">outFile</span><span class="p">:</span>
+        <span class="n">portlist</span> <span class="o">=</span> <span class="n">enumeratePic24Ports</span><span class="p">()</span>
+        <span class="n">portlist</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Device port / pin&#39;</span><span class="p">)</span>
+        <span class="n">csv_dict_writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictWriter</span><span class="p">(</span><span class="n">outFile</span><span class="p">,</span> <span class="n">portlist</span><span class="p">)</span>
+        <span class="n">csv_dict_writer</span><span class="o">.</span><span class="n">writeheader</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">processor</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">processors</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="n">RPy</span><span class="p">,</span> <span class="n">ANn</span><span class="p">,</span> <span class="n">CNm</span> <span class="o">=</span> <span class="n">processors</span><span class="p">[</span><span class="n">processor</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:6.0em;"><p>Remove any duplicates and write out processor names in sorted order.</p>
+</div><div class="code fenced-code highlight-python"><div class="highlight"><pre><span></span>            <span class="n">processor</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">processor</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">))))</span>
+            <span class="n">RPy</span><span class="p">[</span><span class="s1">&#39;Device port / pin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">processor</span> <span class="o">+</span> <span class="s1">&#39; RPy&#39;</span>
+            <span class="n">ANn</span><span class="p">[</span><span class="s1">&#39;Device port / pin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">processor</span> <span class="o">+</span> <span class="s1">&#39; ANn&#39;</span>
+            <span class="n">CNm</span><span class="p">[</span><span class="s1">&#39;Device port / pin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">processor</span> <span class="o">+</span> <span class="s1">&#39; CNm&#39;</span>
+            <span class="n">csv_dict_writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="n">RPy</span><span class="p">)</span>
+            <span class="n">csv_dict_writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="n">ANn</span><span class="p">)</span>
+            <span class="n">csv_dict_writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="n">CNm</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">genTablesFromTemplate</span><span class="p">(</span><span class="s1">&#39;pic24_devices.csv&#39;</span> <span class="p">,</span> <span class="s1">&#39;pic24_devices_combined.csv&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../contents.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">compect_csv.py - Group all processors with identical mappings together</a><ul>
+<li><a class="reference internal" href="#from-https-gist-github-com-samuraisam-901117">From https://gist.github.com/samuraisam/901117</a></li>
+<li><a class="reference internal" href="#code-for-this-program">Code for this program</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../contents.html">Documentation overview</a><ul>
+  <li><a href="../utilities.html">Utilities</a><ul>
+      <li>Previous: <a href="data_sheet_to_csv.py.html" title="previous chapter">data_sheet_to_csv.py - GUI to assist in translating Microchip data sheets to pin mappings</a></li>
+      <li>Next: <a href="../util/dataXfer_test.c.html" title="next chapter">dataXfer_test.c - Runs unit tests on PIC data transfor protocol</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/templates/compact_csv.py"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="../_sources/templates/compact_csv.py"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,175 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>reverse_string.c - Inputs a string, outputs the reverse &#8212; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 6-May-2015 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/CodeChat.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '6-May-2015',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: ''
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="mcp41xxx_spi_pot.c - SPI example: PIC24 uC in Master mode to Microchip MCP41xxx Digital Potentiometer" href="mcp41xxx_spi_pot.c.html" />
+    <link rel="prev" title="soft_uart.c - Demonstrates software-driven UART TX/RX using PIO pins" href="soft_uart.c.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <script type="text/javascript">document.addEventListener("DOMContentLoaded", function(event) {let walk_tree = function(elements,func_walk,func_child) {let walk_children = [];for (let index = 0; index < elements.length; ++index) {let that = elements[index];while (that && !func_walk(that)) {that = that.parentElement;}if (that) {that = func_walk(that);walk_children.push(that);while (that && func_child(that)) {that = func_child(that);walk_children.push(that);}}}return walk_children;};let code = document.getElementsByClassName("fenced-code");walk_tree(code, x => x.nextElementSibling, x => x.firstElementChild).map(x => {x.style.marginTop = 0;x.style.paddingTop = 0;});walk_tree(code, x => x.previousElementSibling, x => x.lastElementChild).map(x => {x.style.marginBottom = 0;x.style.paddingBottom = 0;});});</script><p>“Copyright (c) 2008 Robert B. Reese, Bryan A. Jones, J. W. Bruce (“AUTHORS”)”
+All rights reserved.
+(R. Reese, reese_AT_ece.msstate.edu, Mississippi State University)
+(B. A. Jones, bjones_AT_ece.msstate.edu, Mississippi State University)
+(J. W. Bruce, jwbruce_AT_ece.msstate.edu, Mississippi State University)</p>
+<p>Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose, without fee, and without written agreement is
+hereby granted, provided that the above copyright notice, the following
+two paragraphs and the authors appear in all copies of this software.</p>
+<p>IN NO EVENT SHALL THE “AUTHORS” BE LIABLE TO ANY PARTY FOR
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT
+OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE “AUTHORS”
+HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+<p>THE “AUTHORS” SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
+ON AN “AS IS” BASIS, AND THE “AUTHORS” HAS NO OBLIGATION TO
+PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.”</p>
+<p>Please maintain this header in its entirety when copying/modifying
+these files.</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&quot;pic24_all.h&quot;</span><span class="cp"></span>
+ 
+</pre></div>
+</div>
+<div class="section" id="reverse-string-c-inputs-a-string-outputs-the-reverse">
+<h1>reverse_string.c - Inputs a string, outputs the reverse<a class="headerlink" href="#reverse-string-c-inputs-a-string-outputs-the-reverse" title="Permalink to this headline">¶</a></h1>
+<dl class="docutils">
+<dt>This file is used in three MPLAB projects:</dt>
+<dd><ul class="first last simple">
+<li>reverse_string.mcp - polled RX, TX I/O</li>
+<li>uartrx_fifo.mcp - interrupt RX, polled TX I/O</li>
+<li>uartrxtx_fifo.mcp - interrupt RX, interrupt TX I/O</li>
+<li>Interrupt RX inChar1() is selected by defining  UART1_RX_INTERRUPT macro</li>
+<li>Interrupt TX outChar1() is selected by defining UART1_TX_INTERRUPT macro</li>
+</ul>
+</dd>
+</dl>
+<p>These macros are defined in their respective MPLAB projects.</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span> 
+<span class="kt">void</span> <span class="nf">reverseString</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">psz_s1</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">psz_s2</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">char</span> <span class="o">*</span><span class="n">psz_s1end</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="o">*</span><span class="n">psz_s1</span><span class="p">))</span> <span class="p">{</span>
+    <span class="o">*</span><span class="n">psz_s2</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>  <span class="c1">//psz_s1 is empty, return.</span>
+    <span class="k">return</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="n">psz_s1end</span> <span class="o">=</span> <span class="n">psz_s1</span><span class="p">;</span>
+  <span class="c1">//find end of first string</span>
+  <span class="k">while</span> <span class="p">(</span><span class="o">*</span><span class="n">psz_s1end</span><span class="p">)</span> <span class="n">psz_s1end</span><span class="o">++</span><span class="p">;</span>
+  <span class="n">psz_s1end</span><span class="o">--</span><span class="p">;</span>      <span class="c1">//backup one to first non-zero byte</span>
+  <span class="c1">//now copy to S2 in reverse order</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">psz_s1end</span> <span class="o">!=</span> <span class="n">psz_s1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="o">*</span><span class="n">psz_s2</span> <span class="o">=</span> <span class="o">*</span><span class="n">psz_s1end</span><span class="p">;</span>
+    <span class="n">psz_s1end</span><span class="o">--</span><span class="p">;</span>
+    <span class="n">psz_s2</span><span class="o">++</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="c1">//copy last byte</span>
+  <span class="o">*</span><span class="n">psz_s2</span> <span class="o">=</span> <span class="o">*</span><span class="n">psz_s1end</span><span class="p">;</span>
+  <span class="n">psz_s2</span><span class="o">++</span><span class="p">;</span>
+  <span class="c1">//mark end of string</span>
+  <span class="o">*</span><span class="n">psz_s2</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+
+<span class="cp">#define BUFSIZE 63</span>
+<span class="kt">char</span>  <span class="n">sz_1</span><span class="p">[</span><span class="n">BUFSIZE</span><span class="o">+</span><span class="mi">1</span><span class="p">];</span>
+<span class="kt">char</span>  <span class="n">sz_2</span><span class="p">[</span><span class="n">BUFSIZE</span><span class="o">+</span><span class="mi">1</span><span class="p">];</span>
+<span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">configBasic</span><span class="p">(</span><span class="n">HELLO_MSG</span><span class="p">);</span>
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">inString</span><span class="p">(</span><span class="n">sz_1</span><span class="p">,</span><span class="n">BUFSIZE</span><span class="p">);</span>   <span class="c1">//get a string from the console</span>
+    <span class="n">reverseString</span><span class="p">(</span><span class="n">sz_1</span><span class="p">,</span> <span class="n">sz_2</span><span class="p">);</span>
+    <span class="n">outString</span><span class="p">(</span><span class="n">sz_2</span><span class="p">);</span>          <span class="c1">//output the reversed string</span>
+    <span class="n">outString</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../contents.html">Documentation overview</a><ul>
+  <li><a href="../textbook_examples.html">Textbook examples</a><ul>
+      <li>Previous: <a href="soft_uart.c.html" title="previous chapter">soft_uart.c - Demonstrates software-driven UART TX/RX using PIO pins</a></li>
+      <li>Next: <a href="mcp41xxx_spi_pot.c.html" title="next chapter">mcp41xxx_spi_pot.c -  SPI example: PIC24 uC in Master mode to Microchip MCP41xxx Digital Potentiometer</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/chap10/reverse_string.c"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="../_sources/chap10/reverse_string.c"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

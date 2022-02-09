@@ -1,0 +1,468 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>app_mailD.c &#8212; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 6-May-2015 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/CodeChat.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '6-May-2015',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: ''
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="reset.c - Demonstrates software reset, idle, sleep, watchdog timer operation" href="../explorer16_100p/reset.c.html" />
+    <link rel="prev" title="app_mailC.c" href="app_mailC.c.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <script type="text/javascript">document.addEventListener("DOMContentLoaded", function(event) {let walk_tree = function(elements,func_walk,func_child) {let walk_children = [];for (let index = 0; index < elements.length; ++index) {let that = elements[index];while (that && !func_walk(that)) {that = that.parentElement;}if (that) {that = func_walk(that);walk_children.push(that);while (that && func_child(that)) {that = func_child(that);walk_children.push(that);}}}return walk_children;};let code = document.getElementsByClassName("fenced-code");walk_tree(code, x => x.nextElementSibling, x => x.firstElementChild).map(x => {x.style.marginTop = 0;x.style.paddingTop = 0;});walk_tree(code, x => x.previousElementSibling, x => x.lastElementChild).map(x => {x.style.marginBottom = 0;x.style.paddingBottom = 0;});});</script><div class="section" id="app-maild-c">
+<h1>app_mailD.c<a class="headerlink" href="#app-maild-c" title="Permalink to this headline">¶</a></h1>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="cp">#define ESOS_USE_IRQS</span>
+ 
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>INCLUDEs go here  (First include the main esos.h file)</dt>
+<dd>After that, the user can include what they need</dd>
+</dl>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="cp">#include</span>    <span class="cpf">&quot;esos.h&quot;</span><span class="cp"></span>
+<span class="cp">#ifdef __linux</span>
+<span class="cp">#include</span>    <span class="cpf">&quot;esos_pc.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span>    <span class="cpf">&quot;esos_pc_stdio.h&quot;</span><span class="cp"></span>
+</pre></div>
+</div>
+<p>INCLUDE these so our printf and other PC hacks work</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;sys/select.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;termios.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp"></span>
+<span class="cp">#else</span>
+<span class="cp">#include</span>    <span class="cpf">&quot;esos_pic24.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span>    <span class="cpf">&quot;esos_pic24_rs232.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+<span class="cp">#endif</span>
+ 
+ 
+</pre></div>
+</div>
+<p>DEFINEs go here</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="cp">#if (HARDWARE_PLATFORM == EMBEDDED_F14)</span>
+  <span class="cp">#define CONFIG_LED1()     CONFIG_RF4_AS_DIG_OUTPUT()</span>
+  <span class="cp">#define LED1          _LATF4</span>
+<span class="cp">#else</span>
+  <span class="cp">#define CONFIG_LED1()         do{CONFIG_RB15_AS_DIG_OUTPUT();ENABLE_RB15_OPENDRAIN();}while(0)</span>
+  <span class="cp">#define LED1                  _LATB15</span>
+<span class="cp">#endif</span>
+
+<span class="cp">#define CONFIG_LED2()       CONFIG_RB14_AS_DIG_OUTPUT()</span>
+<span class="cp">#define LED2            _LATB14</span>
+ 
+</pre></div>
+</div>
+<p>PROTOTYPEs go here</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="kt">void</span> <span class="nf">reverseString</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">psz_s1</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">psz_s2</span><span class="p">);</span>
+<span class="kt">uint32_t</span>    <span class="nf">randomNumInRange</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">u32_lo</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">u32_hi</span><span class="p">);</span>
+
+<span class="n">ESOS_USER_TASK</span><span class="p">(</span><span class="n">sender_D0</span><span class="p">);</span>
+<span class="n">ESOS_USER_TASK</span><span class="p">(</span><span class="n">sender_D1</span><span class="p">);</span>
+<span class="n">ESOS_USER_TASK</span><span class="p">(</span><span class="n">recipient_D</span><span class="p">);</span>
+ 
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>GLOBALs go here</dt>
+<dd>Generally, the user-created semaphores will be defined/allocated here</dd>
+</dl>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span> 
+</pre></div>
+</div>
+<p>timer globals</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="kt">uint32_t</span>    <span class="n">u32_myT1Count</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="k">struct</span> <span class="n">stTask</span><span class="o">*</span>    <span class="n">pst_MyTasks</span><span class="p">[</span><span class="mi">3</span><span class="p">];</span>
+ 
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>Simulate the timer ISR found on a MCU</dt>
+<dd>The PC doesn’t have a timer ISR, so this task will periodically
+call the timer services callback instead.
+USED ONLY FOR DEVELOPMENT AND TESTING ON PC.
+Real MCU hardware doesn’t need this task</dd>
+</dl>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="n">ESOS_USER_TASK</span><span class="p">(</span> <span class="n">__simulated_isr</span> <span class="p">)</span> <span class="p">{</span>
+  <span class="n">ESOS_TASK_BEGIN</span><span class="p">();</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">TRUE</span><span class="p">)</span> <span class="p">{</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>call the ESOS timer services callback just like a real H/W ISR would</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>    <span class="n">__esos_tmrSvcsExecute</span><span class="p">();</span>
+    <span class="n">ESOS_TASK_WAIT_TICKS</span><span class="p">(</span>  <span class="mi">1</span> <span class="p">);</span>
+
+  <span class="p">}</span> <span class="c1">// endof while(TRUE)</span>
+  <span class="n">ESOS_TASK_END</span><span class="p">();</span>
+<span class="p">}</span> <span class="c1">// end child_task</span>
+
+
+<span class="cm">/************************************************************************</span>
+<span class="cm"> * User supplied functions</span>
+<span class="cm"> ************************************************************************</span>
+<span class="cm"> */</span>
+ 
+</pre></div>
+</div>
+<p>Returns a random number with a value between the two arguments.</p>
+<table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">/todo</span></kbd></td>
+<td>Yes, I know this routine is cheesy.  But, it works and
+I am in a really big hurry right now.</td></tr>
+</tbody>
+</table>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span> 
+<span class="kt">uint32_t</span>    <span class="nf">randomNumInRange</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">u32_lo</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">u32_hi</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">uint32_t</span>  <span class="n">u32_d1</span><span class="p">,</span> <span class="n">u32_d2</span><span class="p">,</span> <span class="n">u32_d4</span><span class="p">,</span> <span class="n">u32_ret</span><span class="p">;</span>
+  <span class="n">UINT32</span>  <span class="n">U32_temp</span><span class="p">;</span>
+
+  <span class="k">while</span> <span class="p">(</span><span class="n">TRUE</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">u32_d4</span> <span class="o">=</span> <span class="n">esos_GetRandomUint32</span><span class="p">();</span>
+    <span class="n">u32_ret</span> <span class="o">=</span> <span class="n">u32_lo</span> <span class="o">+</span> <span class="n">u32_d4</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">u32_ret</span> <span class="o">&lt;=</span> <span class="n">u32_hi</span><span class="p">)</span> <span class="k">return</span> <span class="n">u32_ret</span><span class="p">;</span>
+
+    <span class="n">U32_temp</span><span class="p">.</span><span class="n">_uint32</span> <span class="o">=</span> <span class="n">u32_d4</span><span class="p">;</span>
+    <span class="n">u32_d2</span> <span class="o">=</span> <span class="n">U32_temp</span><span class="p">.</span><span class="n">u16LoWord</span> <span class="o">^</span> <span class="n">U32_temp</span><span class="p">.</span><span class="n">u16HiWord</span><span class="p">;</span>
+    <span class="n">u32_ret</span> <span class="o">=</span> <span class="n">u32_lo</span> <span class="o">+</span> <span class="n">u32_d2</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">u32_ret</span> <span class="o">&lt;=</span> <span class="n">u32_hi</span><span class="p">)</span> <span class="k">return</span> <span class="n">u32_ret</span><span class="p">;</span>
+
+    <span class="n">u32_d1</span> <span class="o">=</span> <span class="n">U32_temp</span><span class="p">.</span><span class="n">u8LoLsb</span> <span class="o">^</span> <span class="n">U32_temp</span><span class="p">.</span><span class="n">u8LoMsb</span> <span class="o">^</span> <span class="n">U32_temp</span><span class="p">.</span><span class="n">u8HiLsb</span> <span class="o">^</span> <span class="n">U32_temp</span><span class="p">.</span><span class="n">u8HiMsb</span><span class="p">;</span>
+    <span class="n">u32_ret</span> <span class="o">=</span> <span class="n">u32_lo</span> <span class="o">+</span> <span class="n">u32_d1</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">u32_ret</span> <span class="o">&lt;=</span> <span class="n">u32_hi</span><span class="p">)</span> <span class="k">return</span> <span class="n">u32_ret</span><span class="p">;</span>
+  <span class="p">}</span> <span class="c1">//endwhile</span>
+<span class="p">}</span> <span class="c1">//end randomNumInRange</span>
+ 
+ 
+</pre></div>
+</div>
+<p>user-created timer callback</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="n">ESOS_USER_TIMER</span><span class="p">(</span> <span class="n">swTimerCounter</span> <span class="p">)</span> <span class="p">{</span>
+  <span class="n">u32_myT1Count</span><span class="o">++</span><span class="p">;</span>
+<span class="p">}</span> <span class="c1">//endof swTimerCounter</span>
+ 
+</pre></div>
+</div>
+<p>user-created timer callback</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span><span class="n">ESOS_USER_TIMER</span><span class="p">(</span> <span class="n">swTimerLED</span> <span class="p">)</span> <span class="p">{</span>
+  <span class="n">LED1</span> <span class="o">=</span> <span class="o">!</span><span class="n">LED1</span><span class="p">;</span>
+  <span class="n">LED2</span> <span class="o">=</span> <span class="o">!</span><span class="n">LED2</span><span class="p">;</span>
+<span class="cp">#ifdef __linux</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\a</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="n">fflush</span><span class="p">(</span><span class="n">stdout</span><span class="p">);</span>
+<span class="cp">#endif</span>
+<span class="p">}</span> <span class="c1">//endof swTimerLED</span>
+
+
+<span class="cm">/**********************************************************</span>
+<span class="cm">**</span>
+<span class="cm">**     a few tasks to send mail messages to each other</span>
+<span class="cm">**</span>
+<span class="cm">************************************************************/</span>
+
+<span class="n">ESOS_USER_TASK</span><span class="p">(</span> <span class="n">sender_D0</span> <span class="p">)</span> <span class="p">{</span>
+  <span class="kt">uint32_t</span>                <span class="n">u32_rnd</span><span class="p">;</span>
+  <span class="k">static</span>  <span class="kt">uint8_t</span>         <span class="n">u8_cnt</span><span class="p">;</span>
+  <span class="k">static</span>  <span class="n">ESOS_TASK_HANDLE</span>    <span class="n">hTask</span><span class="p">;</span>
+  <span class="k">static</span>  <span class="n">MAILMESSAGE</span>       <span class="n">st_Message</span><span class="p">;</span>
+
+  <span class="n">ESOS_TASK_BEGIN</span><span class="p">();</span>
+  <span class="n">u8_cnt</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>store handle to our recipient ESOS task</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>  <span class="n">hTask</span> <span class="o">=</span> <span class="n">esos_GetTaskHandle</span><span class="p">(</span> <span class="n">recipient_D</span> <span class="p">);</span>
+
+  <span class="k">while</span> <span class="p">(</span><span class="n">TRUE</span><span class="p">)</span> <span class="p">{</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>create/fill in the local copy of the message
+we will send a single uint8 as data payload</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>    <span class="n">ESOS_TASK_MAKE_MSG_UINT8</span><span class="p">(</span><span class="n">st_Message</span><span class="p">,</span> <span class="n">u8_cnt</span><span class="p">);</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>simulate a task that does other things if the
+receipient task mailbox is full</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span> 
+    <span class="k">if</span> <span class="p">(</span><span class="n">ESOS_TASK_MAILBOX_GOT_AT_LEAST_DATA_BYTES</span><span class="p">(</span> <span class="n">hTask</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">uint8_t</span><span class="p">)</span> <span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:3.0em;"><p>ESOS task mailboxes are stored locally in each task.
+but we already now the recipient task has enough space
+in their mailbox, so send message</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>      <span class="n">printf</span><span class="p">(</span><span class="s">&quot;D0 sending MESSAGE %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">u8_cnt</span><span class="p">);</span>
+      <span class="n">ESOS_TASK_SEND_MESSAGE</span><span class="p">(</span><span class="n">hTask</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">st_Message</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="n">printf</span><span class="p">(</span><span class="s">&quot;D0 doing useful work instead of mailing. Discarding MESSAGE %d.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">u8_cnt</span> <span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="n">u8_cnt</span><span class="o">++</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">u8_cnt</span><span class="o">&gt;=</span><span class="mi">100</span><span class="p">)</span> <span class="n">u8_cnt</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>wait a random amount of time between sending mail messages</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>    <span class="n">u32_rnd</span> <span class="o">=</span> <span class="mi">1</span><span class="o">+</span><span class="p">(</span><span class="mh">0x0F</span> <span class="o">&amp;</span> <span class="n">esos_GetRandomUint32</span><span class="p">());</span>
+    <span class="n">u32_rnd</span> <span class="o">&lt;&lt;=</span> <span class="mi">7</span><span class="p">;</span>
+    <span class="n">ESOS_TASK_WAIT_TICKS</span><span class="p">(</span> <span class="n">u32_rnd</span><span class="p">);</span>
+
+  <span class="p">}</span> <span class="c1">// endof while(TRUE)</span>
+  <span class="n">ESOS_TASK_END</span><span class="p">();</span>
+<span class="p">}</span> <span class="c1">// end sender_D0()</span>
+
+<span class="n">ESOS_USER_TASK</span><span class="p">(</span> <span class="n">sender_D1</span> <span class="p">)</span> <span class="p">{</span>
+  <span class="k">static</span>    <span class="kt">uint32_t</span>        <span class="n">u32_rnd</span><span class="p">;</span>
+  <span class="k">static</span>  <span class="kt">uint8_t</span>         <span class="n">u8_cnt</span><span class="p">;</span>
+  <span class="k">static</span>  <span class="n">ESOS_TASK_HANDLE</span>    <span class="n">hTask</span><span class="p">;</span>
+  <span class="k">static</span>  <span class="n">MAILMESSAGE</span>       <span class="n">st_Message</span><span class="p">;</span>
+
+  <span class="n">ESOS_TASK_BEGIN</span><span class="p">();</span>
+  <span class="n">u8_cnt</span><span class="o">=</span> <span class="mi">100</span><span class="p">;</span>
+  <span class="n">hTask</span> <span class="o">=</span> <span class="n">esos_GetTaskHandle</span><span class="p">(</span> <span class="n">recipient_D</span> <span class="p">);</span>
+
+  <span class="k">while</span> <span class="p">(</span><span class="n">TRUE</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">ESOS_TASK_MAKE_MSG_UINT8</span><span class="p">(</span><span class="n">st_Message</span><span class="p">,</span> <span class="n">u8_cnt</span><span class="p">);</span>               <span class="c1">// create message locally</span>
+    <span class="n">ESOS_TASK_WAIT_ON_TASKS_MAILBOX_HAS_AT_LEAST</span><span class="p">(</span><span class="n">hTask</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">uint8_t</span><span class="p">));</span>     <span class="c1">// wait until recipient has mailbox space</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>get a random number</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>    <span class="n">u32_rnd</span> <span class="o">=</span> <span class="mi">1</span><span class="o">+</span><span class="p">(</span><span class="mh">0x0F</span> <span class="o">&amp;</span> <span class="n">esos_GetRandomUint32</span><span class="p">());</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>create a random message that wants delivery confirmation (1-in-4 chance)</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>    <span class="k">if</span> <span class="p">(</span> <span class="p">(</span><span class="n">u32_rnd</span> <span class="o">%</span> <span class="mi">4</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
+      <span class="n">st_Message</span><span class="p">.</span><span class="n">u8_flags</span> <span class="o">|=</span> <span class="n">ESOS_MAILMESSAGE_REQUEST_ACK</span><span class="p">;</span>
+      <span class="n">printf</span><span class="p">(</span><span class="s">&quot;D1 sending MESSAGE with ACK request %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">u8_cnt</span><span class="p">);</span>
+      <span class="n">ESOS_TASK_WAIT_ON_DELIVERY</span><span class="p">(</span><span class="n">hTask</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">st_Message</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="n">printf</span><span class="p">(</span><span class="s">&quot;D1 sending MESSAGE %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">u8_cnt</span> <span class="p">);</span>
+      <span class="n">ESOS_TASK_SEND_MESSAGE</span><span class="p">(</span><span class="n">hTask</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">st_Message</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="n">u8_cnt</span><span class="o">++</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">u8_cnt</span><span class="o">&gt;=</span><span class="mi">200</span><span class="p">)</span> <span class="n">u8_cnt</span><span class="o">=</span><span class="mi">100</span><span class="p">;</span>
+
+    <span class="n">u32_rnd</span> <span class="o">&lt;&lt;=</span> <span class="mi">7</span><span class="p">;</span>
+    <span class="n">ESOS_TASK_WAIT_TICKS</span><span class="p">(</span> <span class="n">u32_rnd</span><span class="p">);</span>
+
+  <span class="p">}</span> <span class="c1">// endof while(TRUE)</span>
+  <span class="n">ESOS_TASK_END</span><span class="p">();</span>
+<span class="p">}</span> <span class="c1">// end sender_D1()</span>
+
+
+<span class="c1">//TASK that doesn&#39;t check mail very often</span>
+<span class="n">ESOS_USER_TASK</span><span class="p">(</span> <span class="n">recipient_D</span> <span class="p">)</span> <span class="p">{</span>
+  <span class="kt">uint32_t</span>                <span class="n">u32_rnd</span><span class="p">;</span>
+  <span class="k">static</span> <span class="n">MAILMESSAGE</span>    <span class="n">stMsg</span><span class="p">;</span>
+  <span class="k">static</span> <span class="n">ESOS_TASK_HANDLE</span>           <span class="n">hSenderD0</span><span class="p">,</span> <span class="n">hSenderD1</span><span class="p">;</span>
+
+  <span class="n">ESOS_TASK_BEGIN</span><span class="p">();</span>
+  <span class="n">hSenderD0</span> <span class="o">=</span> <span class="n">esos_GetTaskHandle</span><span class="p">(</span> <span class="n">sender_D0</span><span class="p">);</span>
+  <span class="n">hSenderD1</span> <span class="o">=</span> <span class="n">esos_GetTaskHandle</span><span class="p">(</span> <span class="n">sender_D1</span><span class="p">);</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">TRUE</span><span class="p">)</span> <span class="p">{</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>create a random delay to simulate being “busy”</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>    <span class="n">u32_rnd</span> <span class="o">=</span> <span class="mi">1</span><span class="o">+</span><span class="p">(</span><span class="mh">0x0F</span> <span class="o">&amp;</span> <span class="n">esos_GetRandomUint32</span><span class="p">());</span>
+    <span class="n">u32_rnd</span> <span class="o">&lt;&lt;=</span> <span class="mi">10</span><span class="p">;</span>
+    <span class="n">ESOS_TASK_WAIT_TICKS</span><span class="p">(</span> <span class="n">u32_rnd</span> <span class="p">);</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>check for incoming mail</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>    <span class="n">ESOS_TASK_WAIT_FOR_MAIL</span><span class="p">();</span>
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:2.0em;"><p>get most recent message (flushes the rest)</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>    <span class="n">ESOS_TASK_GET_LAST_MESSAGE</span><span class="p">(</span> <span class="o">&amp;</span><span class="n">stMsg</span> <span class="p">);</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Got a message from &quot;</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">ESOS_IS_TASK_SENDER</span><span class="p">(</span> <span class="n">hSenderD0</span><span class="p">,</span> <span class="n">stMsg</span><span class="p">))</span> <span class="p">{</span>
+      <span class="n">printf</span><span class="p">(</span><span class="s">&quot;sender_D0&quot;</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">ESOS_IS_TASK_SENDER</span><span class="p">(</span> <span class="n">hSenderD1</span><span class="p">,</span> <span class="n">stMsg</span><span class="p">))</span> <span class="p">{</span>
+      <span class="n">printf</span><span class="p">(</span><span class="s">&quot;sender_D1&quot;</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="n">printf</span><span class="p">(</span><span class="s">&quot;UNKNOWN&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">printf</span> <span class="p">(</span><span class="s">&quot; containing %d          enroute time = %ld ms</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">stMsg</span><span class="p">.</span><span class="n">au8_Contents</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">esos_GetSystemTick</span><span class="p">()</span><span class="o">-</span><span class="n">ESOS_GET_MSG_POSTMARK</span><span class="p">(</span><span class="n">stMsg</span><span class="p">)</span> <span class="p">);</span>
+  <span class="p">}</span> <span class="c1">// endof while(TRUE)</span>
+  <span class="n">ESOS_TASK_END</span><span class="p">();</span>
+<span class="p">}</span> <span class="c1">// end recipient_D()</span>
+
+
+
+<span class="cm">/******************************************************************************</span>
+<span class="cm"> * Function:        void user_init(void)</span>
+<span class="cm"> *</span>
+<span class="cm"> * PreCondition:    None</span>
+<span class="cm"> *</span>
+<span class="cm"> * Input:           None</span>
+<span class="cm"> *</span>
+<span class="cm"> * Output:          None</span>
+<span class="cm"> *</span>
+<span class="cm"> * Side Effects:    None</span>
+<span class="cm"> *</span>
+<span class="cm"> * Overview:        user_init is a centralized initialization routine where</span>
+<span class="cm"> *                  the user can setup their application.   It is called</span>
+<span class="cm"> *                  automagically by ES_OS during the operating system</span>
+<span class="cm"> *                  initialization.</span>
+<span class="cm"> *</span>
+<span class="cm"> * Note:            The user should set up any state machines and init</span>
+<span class="cm"> *                  all application variables.  They can also turn on</span>
+<span class="cm"> *                  any needed peripherals here.</span>
+<span class="cm"> *</span>
+<span class="cm"> *                  The user SHALL NOT mess with the interrupt hardware</span>
+<span class="cm"> *                  directly!!!  The ES_OS must be aware of the interrupts</span>
+<span class="cm"> *                  and provides osXXXXXXX functions for the user to use.</span>
+<span class="cm"> *                  Using these ES_OS-provided functions, the user may</span>
+<span class="cm"> *                  (and probably should) initialize, register, and enable</span>
+<span class="cm"> *                  interrupts in this routine.</span>
+<span class="cm"> *</span>
+<span class="cm"> *                  Furthermore, the user should register AT LEAST one</span>
+<span class="cm"> *                  user application task here (via esos_RegisterTask) or</span>
+<span class="cm"> *                  the ES_OS scheduler will have nothing to schedule</span>
+<span class="cm"> *                  to run when this function returns.</span>
+<span class="cm"> *</span>
+<span class="cm"> *****************************************************************************/</span>
+<span class="kt">void</span> <span class="n">user_init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+
+  <span class="n">CONFIG_LED1</span><span class="p">();</span>
+  <span class="n">CONFIG_LED2</span><span class="p">();</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>Now, let’s get down and dirty with ESOS and our user tasks</p>
+<blockquote>
+<div>Once tasks are registered, they will start executing in
+the ESOS scheduler.</div></blockquote>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span> 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><p>register our little ESOS task to mimic MCU’s TIMER T1 IRQ which kicks off
+the ESOS S/W timers when they expire</p>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span>  <span class="n">esos_RegisterTask</span><span class="p">(</span> <span class="n">__simulated_isr</span> <span class="p">);</span>
+ 
+</pre></div>
+</div>
+<div class="CodeChat-indent" style="margin-left:1.0em;"><div class="section" id="register-some-user-tasks">
+<h2>REGISTER SOME USER TASKS<a class="headerlink" href="#register-some-user-tasks" title="Permalink to this headline">¶</a></h2>
+</div><div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span> 
+ 
+</pre></div>
+</div>
+<p>here are several combinations of tasks that should work together</p>
+<div class="code fenced-code highlight-c"><div class="highlight"><pre><span></span> 
+  <span class="n">esos_RegisterTimer</span><span class="p">(</span> <span class="n">swTimerLED</span><span class="p">,</span> <span class="mi">500</span> <span class="p">);</span>
+  <span class="n">esos_RegisterTask</span><span class="p">(</span> <span class="n">sender_D0</span> <span class="p">);</span>
+  <span class="n">esos_RegisterTask</span><span class="p">(</span> <span class="n">sender_D1</span> <span class="p">);</span>
+  <span class="n">esos_RegisterTask</span><span class="p">(</span> <span class="n">recipient_D</span> <span class="p">);</span>
+
+  <span class="n">__esos_unsafe_PutString</span><span class="p">(</span> <span class="n">HELLO_MSG</span> <span class="p">);</span>
+
+<span class="p">}</span> <span class="c1">// end user_init()</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../contents.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">app_mailD.c</a><ul>
+<li><a class="reference internal" href="#register-some-user-tasks">REGISTER SOME USER TASKS</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../contents.html">Documentation overview</a><ul>
+  <li><a href="../textbook_examples.html">Textbook examples</a><ul>
+      <li>Previous: <a href="app_mailC.c.html" title="previous chapter">app_mailC.c</a></li>
+      <li>Next: <a href="../explorer16_100p/reset.c.html" title="next chapter">reset.c - Demonstrates software reset, idle, sleep, watchdog timer operation</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/chap14/app_mailD.c"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="../_sources/chap14/app_mailD.c"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
