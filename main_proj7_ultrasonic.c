@@ -1,7 +1,7 @@
 /* 
- * File:   
- * Author: 
- * Date:
+ * File:   main_proj7_ultrasonic.c
+ * Author: Ian Sulley
+ * Date: 02/09/2022
  * Purpose:
  * Modified:
  */
