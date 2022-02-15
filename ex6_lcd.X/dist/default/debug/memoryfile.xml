@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project>
-  <executable name="dist/default/production/ex6_lcd.X.production.elf">
+  <executable name="dist/default/debug/ex6_lcd.X.debug.elf">
     <memory name="data">
       <units>bytes</units>
       <length>8192</length>
-      <used>346</used>
-      <free>7846</free>
+      <used>426</used>
+      <free>7766</free>
     </memory>
     <memory name="program">
       <units>bytes</units>
       <length>131328</length>
-      <used>23004</used>
-      <free>108324</free>
+      <used>23085</used>
+      <free>108243</free>
     </memory>
   </executable>
 </project>

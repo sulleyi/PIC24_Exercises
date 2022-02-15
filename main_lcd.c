@@ -17,8 +17,11 @@
 
 /*********** GLOBAL VARIABLE AND FUNCTION DEFINITIONS *******/
 
+uint8_t centerMessage(uint8_t len){
+    uint8_t offset = ((float)(16 - len))/ 2.0;
+    return offset;
+}
 
-    
 /********** MAIN PROGRAM ********************************/
 int main ( void )  //main function that....
 { 
@@ -42,16 +45,20 @@ int main ( void )  //main function that....
      */
     
    // outStringLCD(char *psz_s); this function sends out a string to the LCD display
+    char *line1="ECE-218";
+    char *line2="Embedded Systems";
+    uint8_t len1= strlen(line1);
+    uint8_t len2= strlen(line2);
     
-
-/* Initialize ports and other one-time code */
+    uint8_t offset1=centerMessage(len1);
+    uint8_t offset2=centerMessage(len2); 
     
-    outStringLCD("Hello there!"); //Write string ?Hello there!?
-    writeLCD(0xC0, 0, 0, 1); //Write command to position cursor at 0x40
-    outStringLCD("Enjoy LCD Demo");//Write string ?Enjoy LCD Demo?
-
-
+    writeLCD(0x80+offset1, 0, 0, 1);
+    outStringLCD(line1); //Write string 'Hello there!'
     
+    writeLCD(0xC0+offset2, 0, 0, 1); //Write command to position cursor at 0x40
+    outStringLCD(line2);//Write string 'Enjoy LCD Demo'
+  
 /* Main program loop */
 	while (1) {	
 		
