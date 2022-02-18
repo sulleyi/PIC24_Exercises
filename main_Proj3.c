@@ -12,8 +12,7 @@
 #include "lcd4bit_lib.h"
 
 // #defines for handy constant macros (uppercase by convention)
-#define SWITCH (_RA4)
-#define POT (_RA1)
+#define POT (_RA1)     // Control Motor Speed
 #define TRIG (_LATB2)  // Trigger Output
 
 #define PWM_PERIOD 3125
@@ -28,11 +27,8 @@ volatile uint8_t echo_fall; //True/False flags to keep track of which edge of th
 //hold the rising and falling edge timer values captured by the IC1 peripheral
 volatile uint16_t rise_time; 
 volatile uint16_t fall_time;
-
     
 uint16_t pwm_cont; // PWM for continuous servo 
-
-
 
 void configTimer2(void){
     
@@ -61,31 +57,22 @@ void configOC1(void){
     OC1CONbits.OCTSEL = 0; // output compare module to use Timer 2 as the clock source
     OC1CONbits.OCM = 0b110; // operate in PWM mode with fault pin disabled
 }
-
     
 void configIO(void){
     CONFIG_RA4_AS_DIG_INPUT(); //SWITCH
     CONFIG_RA1_AS_ANALOG();//MOTOR CONTRL POTENTIOMETER
 } 
 
-float scale(float reading, uint16_t min, uint16_t max){
-    float readRatio = ( (float) reading *  3.3) / 1023;
-    uint16_t ServoDiff = max - min; // calculates difference in servo
-    float readRatio_ServoDiff = readRatio * ServoDiff;
-    return readRatio_ServoDiff + min;
-}
-
-
+//USE TIMER 3 for IC
 void configTimer3(){
     
-    T3CONbits.TON = 0;  // Turn off Timer 2 
+    T3CONbits.TON = 0;  // Turn off Timer 3 
     T3CONbits.TCKPS = 0b10; //prescale 1:64
     PR3 = 0xFFFF; //maximum value
     TMR3 = 0; // init timer to 0
     _T3IF = 0; // init flag to 0
     T3CONbits.TON = 1;  // Turn on Timer 2
 }
-
 
 void configIC1(void){
 	T3CONbits.TON=0; //Turn off timer 2
@@ -124,41 +111,92 @@ void   _ISR   _IC1Interrupt(void){
 	}
 }
 
+/*TODO make sure this scale works for all uses (both limiting speed & reading potentiometer value*/
+float scale(float reading, uint16_t min, uint16_t max){
+    float readRatio = ( (float) reading *  3.3) / 1023;
+    uint16_t ServoDiff = max - min; // calculates difference in servo
+    float readRatio_ServoDiff = readRatio * ServoDiff;
+    return readRatio_ServoDiff + min;
+}
+
 float calcDistance(float echo_duration){
 	//Distance in centimeters = echo_duration(μs)/58
 	return echo_duration / 58;
 }
 
+uint8_t limitSpeed(uint8_t maxSpeed, uint8_t distance){
+	if(distance > 25){ //if no car ahead, go full speed 
+		return maxSpeed
+	}
+	else if(15 < distance < 25){ //return a scaled speed to relative to the distance from the car ahead 
+		return scale(distance, 0, maxSpeed); //**TODO** confirm scale function works  
+	}
+	else if(distance < 15){ //if car ahead is getting too close,STOP
+		return 0;
+	}
+}
+
+void displayDashboard(uint8_t speed, uint8_t distance){
+		//**TODO** Finish Display
+                writeLCD(0xC0, 0, 0, 1); //Write command to position cursor at 0x40
+        	outStringLCD("Speed: ");
+                writeLCD(0xC0, 0, 0, 1); //Write command to position cursor at 0x40
+        	outStringLCD("Distance: ");
+}
+
 /********** MAIN PROGRAM ********************************/
-int main ( void )  //main function that....
-{ 
-/* Declare local variables */
+int main ( void ){
+	/* Declare local variables */
+	uint8_t maxSpeed;
+	uint8_t currentSpeed;
+	uint8_t distance;
 
+	uint8_t toggleCruiseControl = 1; //**TODO** currently just set to always on
 
-/* Call configuration routines */
+	/* Call configuration routines */
 	configClock();  //Sets the clock to 40MHz using FRC and PLL
 	configTimer2();
 	configIO();
 	configOC1();
 	configControlLCD(); //configures the RS, RW and E control lines as outputs and initializes them low
-	initLCD(); // executes the initialization sequence specified in the Hitachi HD44780 LCD controller datasheet, clears the screen and sets the cursor position to upper left (home)
+	initLCD(); // initialization LCD: clears the screen and sets the cursor position to upper left (home)
 	configTimer3();
 	configSensor();
 	configADC1_ManualCH0(RA1_AN, 31, 0);        // configures ADC 
+
+	/* Initialize ports and other one-time code */
+	_T3IF = 0;
+	_T3IE = 1;
 	_T2IF = 0;
 	_T2IE = 1;
 	T2CONbits.TON = 1;
+	T3CONbits.TON = 1;
 	DELAY_MS(500);
 
-    pwm_cont = 234; // setting pwm to midway for cont servo
-
-/* Initialize ports and other one-time code */
-
-
+	pwmCont = 234; // setting pwm to midway for cont servo
     
-/* Main program loop */
-	while (1) {	
-		
-		}
-return 0;
+	/* Main program loop */
+	while (1) {
+
+		/* collect & compute inputs*/
+		distance = calcDistance(fall_time - rise_time);
+		maxSpeed = scale(convertADC1(), P_CONT_MIN, P_CONT_MAX);
+		currentSpeed = limitSpeed(maxSpeed, distance);
+
+
+		switch(toggleCruiseControl){
+			/* Continuous Servo Control*/
+			case 0:
+                		pwmCont = maxSpeed;
+				displayDashboard(currentSpeed, distance);
+                		break;
+                
+            		/*Standard Servo Control*/
+            		case 1:
+                		pwmCont = limitSpeed(maxSpeed, distance);
+				displayDashboard(currentSpeed, distance);
+				break;
+	    	}
+	}
+	return 0;
 }
