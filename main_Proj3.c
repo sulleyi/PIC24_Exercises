@@ -14,6 +14,7 @@
 // #defines for handy constant macros (uppercase by convention)
 #define POT (_RA1)     // Control Motor Speed
 #define TRIG (_LATB2)  // Trigger Output
+#define TOGGLE_CRUISE (_RA0)  // Toggle Cruise Control
 
 #define PWM_PERIOD 3125
 #define P_CONT_MIN 203
@@ -28,7 +29,7 @@ volatile uint8_t echo_fall; //True/False flags to keep track of which edge of th
 volatile uint16_t rise_time; 
 volatile uint16_t fall_time;
     
-uint16_t pwm_cont; // PWM for continuous servo 
+uint16_t pwmCont; // PWM for continuous servo 
 
 void configTimer2(void){
     
@@ -41,7 +42,7 @@ void configTimer2(void){
 }
 
 void   _ISR   _T2Interrupt(void){
-    OC1RS = pwm_cont;       //OC2RS register assigned pwm for continuous
+    OC1RS = pwmCont;       //OC2RS register assigned pwm for continuous
     _T2IF = 0;
 }
 
@@ -111,6 +112,26 @@ void   _ISR   _IC1Interrupt(void){
 	}
 }
 
+
+/* Return  num in ASCII format 000*/
+void numToASCII(uint8_t num, char *str){
+    	uint16_t Nint = num;
+	str[0] =0x30;str[1] = 0x30; str[2] = 0x30; //formated ASCII
+    
+	while(Nint > 100){
+        	Nint = Nint -100;
+        	str[0]++;
+    	}
+    	while(Nint > 10){
+        	Nint = Nint - 10;
+        	str[1]++;
+    	}
+	while(Nint > 0){
+		Nint = Nint - 1;
+		str[2]++;
+	}
+}
+
 /*TODO make sure this scale works for all uses (both limiting speed & reading potentiometer value*/
 float scale(float reading, uint16_t min, uint16_t max){
     float readRatio = ( (float) reading *  3.3) / 1023;
@@ -126,22 +147,27 @@ float calcDistance(float echo_duration){
 
 uint8_t limitSpeed(uint8_t maxSpeed, uint8_t distance){
 	if(distance > 25){ //if no car ahead, go full speed 
-		return maxSpeed
+		return maxSpeed;
 	}
-	else if(15 < distance < 25){ //return a scaled speed to relative to the distance from the car ahead 
+	else if(15 < distance && distance < 25){ //return a scaled speed to relative to the distance from the car ahead 
 		return scale(distance, 0, maxSpeed); //**TODO** confirm scale function works  
 	}
 	else if(distance < 15){ //if car ahead is getting too close,STOP
 		return 0;
 	}
+	return 0;
 }
 
-void displayDashboard(uint8_t speed, uint8_t distance){
+void displayDashboard(uint8_t speed, uint8_t distance, char *spdStr, char *distStr){
 		//**TODO** Finish Display
                 writeLCD(0xC0, 0, 0, 1); //Write command to position cursor at 0x40
         	outStringLCD("Speed: ");
+                writeLCD(0xCA, 0, 0, 1); //Write command to position cursor at 0x40
+		outStringLCD(numToASCII(speed, spdStr);
                 writeLCD(0xC0, 0, 0, 1); //Write command to position cursor at 0x40
         	outStringLCD("Distance: ");
+                writeLCD(0xCA, 0, 0, 1); //Write command to position cursor at 0x40
+		outStringLCD(numToASCII(distance, distStr);
 }
 
 /********** MAIN PROGRAM ********************************/
@@ -151,7 +177,8 @@ int main ( void ){
 	uint8_t currentSpeed;
 	uint8_t distance;
 
-	uint8_t toggleCruiseControl = 1; //**TODO** currently just set to always on
+	char spdStr[3];
+	char dstStr[3];
 
 	/* Call configuration routines */
 	configClock();  //Sets the clock to 40MHz using FRC and PLL
@@ -184,11 +211,11 @@ int main ( void ){
 		currentSpeed = limitSpeed(maxSpeed, distance);
 
 
-		switch(toggleCruiseControl){
+		switch(TOGGLE_CRUISE){
 			/* Continuous Servo Control*/
 			case 0:
                 		pwmCont = maxSpeed;
-				displayDashboard(currentSpeed, distance);
+				displayDashboard(currentSpeed, distance, spdStr, dstStr);
                 		break;
                 
             		/*Standard Servo Control*/
