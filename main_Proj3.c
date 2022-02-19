@@ -114,7 +114,7 @@ void   _ISR   _IC1Interrupt(void){
 
 
 /* Return  num in ASCII format 000*/
-void numToASCII(uint8_t num, char *str){
+char *numToASCII(uint8_t num, char *str){
     	uint16_t Nint = num;
 	str[0] =0x30;str[1] = 0x30; str[2] = 0x30; //formated ASCII
     
@@ -130,6 +130,7 @@ void numToASCII(uint8_t num, char *str){
 		Nint = Nint - 1;
 		str[2]++;
 	}
+	return str;
 }
 
 /*TODO make sure this scale works for all uses (both limiting speed & reading potentiometer value*/
@@ -163,11 +164,11 @@ void displayDashboard(uint8_t speed, uint8_t distance, char *spdStr, char *distS
                 writeLCD(0xC0, 0, 0, 1); //Write command to position cursor at 0x40
         	outStringLCD("Speed: ");
                 writeLCD(0xCA, 0, 0, 1); //Write command to position cursor at 0x40
-		outStringLCD(numToASCII(speed, spdStr);
+		outStringLCD(numToASCII(speed, spdStr));
                 writeLCD(0xC0, 0, 0, 1); //Write command to position cursor at 0x40
         	outStringLCD("Distance: ");
                 writeLCD(0xCA, 0, 0, 1); //Write command to position cursor at 0x40
-		outStringLCD(numToASCII(distance, distStr);
+		outStringLCD(numToASCII(distance, distStr));
 }
 
 /********** MAIN PROGRAM ********************************/
@@ -212,16 +213,16 @@ int main ( void ){
 
 
 		switch(TOGGLE_CRUISE){
-			/* Continuous Servo Control*/
+			/* CRUISE CONTROL DE-ACTIVATED*/
 			case 0:
                 		pwmCont = maxSpeed;
 				displayDashboard(currentSpeed, distance, spdStr, dstStr);
                 		break;
                 
-            		/*Standard Servo Control*/
+            		/*CRUISE CONTROL ACTIVATED*/
             		case 1:
                 		pwmCont = limitSpeed(maxSpeed, distance);
-				displayDashboard(currentSpeed, distance);
+				displayDashboard(currentSpeed, distance, spdStr, dstStr);
 				break;
 	    	}
 	}
