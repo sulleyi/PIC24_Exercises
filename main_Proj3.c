@@ -182,13 +182,25 @@ void displayDashboard(uint8_t speed, uint8_t distance, char *spdStr, char *distS
     outStringLCD(numToASCII(distance, distStr));
 }
 
+uint32_t pulseUltrasonic(void){
+	TRIG = 1;
+	DELAY_US(10);
+	TRIG = 0;
+	echo_rise = 1;
+	while(!echo_fall){
+	}
+	uint32_t echo_duration = fall_time - rise_time; //in Tcks
+	echo_duration = echo_duration *1.6;
+	return echo_duration;
+}
+
 /********** MAIN PROGRAM ********************************/
 int main ( void ){
 	/* Declare local variables */
 	uint8_t maxSpeed;
 	uint8_t currentSpeed;
 	uint8_t distance;
-
+	uint32_t echo_duration;
 	char *spdStr;
 	char *dstStr;
 
@@ -197,7 +209,7 @@ int main ( void ){
 	configTimer2();
 	configIO();
 	configOC1();
-    configIC1();
+	configIC1();
 	configControlLCD(); //configures the RS, RW and E control lines as outputs and initializes them low
 	initLCD(); // initialization LCD: clears the screen and sets the cursor position to upper left (home)
 	configTimer3();
@@ -206,7 +218,7 @@ int main ( void ){
 
 	/* Initialize ports and other one-time code */
 	outStringLCD("Initializing");
-    pwmCont = 234; // setting pwm to midway for cont servo
+	pwmCont = 234; // setting pwm to midway for cont servo
 	_T3IF = 0;
 	_T3IE = 1;
 	_T2IF = 0;
@@ -219,7 +231,8 @@ int main ( void ){
 	while (1) {
 
 		/* collect & compute inputs*/
-		distance = calcDistance(fall_time - rise_time);
+		echo_duration = pulseUltrasonic();
+		distance = calcDistance(echo_duration);
 		maxSpeed = scale2(convertADC1(), ADC_MIN, ADC_MAX, P_CONT_MIN, P_CONT_MAX);
 		currentSpeed = limitSpeed(maxSpeed, distance);
 
