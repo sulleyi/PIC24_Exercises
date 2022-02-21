@@ -1,8 +1,8 @@
 /* 
- * File:   
- * Author: 
- * Date:
- * Purpose:
+ * File: main_Proj3.c
+ * Author: Ian Sulley
+ * Date:  02/21/22
+ * Purpose: Automatic Cruise Control
  * Modified:
  */
 /*********** COMPILER DIRECTIVES *********/
@@ -63,8 +63,8 @@ void configOC1(void){
 }
     
 void configIO(void){
-    CONFIG_RA4_AS_DIG_INPUT(); //SWITCH
     CONFIG_RA1_AS_ANALOG();//MOTOR CONTRL POTENTIOMETER
+    CONFIG_RA0_AS_DIG_INPUT(); // Cruise Control Switch
 } 
 
 //USE TIMER 3 for IC
@@ -154,7 +154,7 @@ float scale2(float x, uint16_t x_min, uint16_t x_max, uint16_t y_min, uint16_t  
 }
 
 float calcDistance(float echo_duration){
-	//Distance in centimeters = echo_duration(μs)/58
+	//Distance in centimeters = echo_duration(us)/58
 	return echo_duration / 58;
 }
 
@@ -172,15 +172,14 @@ uint8_t limitSpeed(uint8_t maxSpeed, uint8_t distance){
 }
 
 void displayDashboard(uint8_t speed, uint8_t distance, char *spdStr, char *distStr){
-		//**TODO** Finish Display
-                writeLCD(0xC0, 0, 0, 1); //Write command to position cursor at 0x40
-        	outStringLCD("Speed: ");
-                writeLCD(0xCA, 0, 0, 1); //Write command to position cursor at 0x40
-		outStringLCD(numToASCII(speed, spdStr));
-                writeLCD(0xC0, 0, 0, 1); //Write command to position cursor at 0x40
-        	outStringLCD("Distance: ");
-                writeLCD(0xCA, 0, 0, 1); //Write command to position cursor at 0x40
-		outStringLCD(numToASCII(distance, distStr));
+    writeLCD(0xC0, 0, 0, 1); //Write command to position cursor at 0x40
+    outStringLCD("Speed: ");
+    writeLCD(0xCA, 0, 0, 1); //Write command to position cursor at 0x40
+    outStringLCD(numToASCII(speed, spdStr));
+    writeLCD(0xC0, 0, 0, 1); //Write command to position cursor at 0x40
+    outStringLCD("Distance: ");
+    writeLCD(0xCA, 0, 0, 1); //Write command to position cursor at 0x40
+    outStringLCD(numToASCII(distance, distStr));
 }
 
 /********** MAIN PROGRAM ********************************/
@@ -198,6 +197,7 @@ int main ( void ){
 	configTimer2();
 	configIO();
 	configOC1();
+    configIC1();
 	configControlLCD(); //configures the RS, RW and E control lines as outputs and initializes them low
 	initLCD(); // initialization LCD: clears the screen and sets the cursor position to upper left (home)
 	configTimer3();
@@ -206,6 +206,7 @@ int main ( void ){
 
 	/* Initialize ports and other one-time code */
 	outStringLCD("Initializing");
+    pwmCont = 234; // setting pwm to midway for cont servo
 	_T3IF = 0;
 	_T3IE = 1;
 	_T2IF = 0;
@@ -213,9 +214,7 @@ int main ( void ){
 	T2CONbits.TON = 1;
 	T3CONbits.TON = 1;
 	DELAY_MS(500);
-
-	pwmCont = 234; // setting pwm to midway for cont servo
-    
+  
 	/* Main program loop */
 	while (1) {
 
@@ -227,16 +226,16 @@ int main ( void ){
 		switch(TOGGLE_CRUISE){
 			/* CRUISE CONTROL DE-ACTIVATED*/
 			case 0:
-                		pwmCont = maxSpeed;
+                pwmCont = maxSpeed;
 				displayDashboard(maxSpeed, distance, spdStr, dstStr);
-                		break;
+                break;
                 
-            		/*CRUISE CONTROL ACTIVATED*/
-            		case 1:
-                		pwmCont = limitSpeed(maxSpeed, distance);
+            /*CRUISE CONTROL ACTIVATED*/
+            case 1:
+                pwmCont = limitSpeed(maxSpeed, distance);
 				displayDashboard(currentSpeed, distance, spdStr, dstStr);
 				break;
-	    	}
+	    }
 	}
 	return 0;
 }
