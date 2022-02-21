@@ -20,6 +20,9 @@
 #define P_CONT_MIN 203
 #define P_CONT_MAX 265
 
+#define ADC_MIN 0
+#define ADC_MAX 1023
+
 /*********** GLOBAL VARIABLE AND FUNCTION DEFINITIONS *******/
 volatile uint8_t echo_rise; 
 volatile uint8_t echo_fall; //True/False flags to keep track of which edge of the echo pulse has occurred. 
@@ -76,9 +79,9 @@ void configTimer3(){
 }
 
 void configIC1(void){
-	T3CONbits.TON=0; //Turn off timer 2
+	T3CONbits.TON=0; //Turn off timer 3
 	CONFIG_IC1_TO_RP(RB4_RP);//attach input capture to RB4 (pin 11)
-	IC1CONbits.ICTMR = 1; //**TODO** check we are using the correct timer for IC
+	IC1CONbits.ICTMR = 1; // Uses timer 3
 	IC1CONbits.ICI= 0b00;
 	IC1CONbits.ICM= 0b001;
 }
@@ -141,6 +144,15 @@ float scale(float reading, uint16_t min, uint16_t max){
     return readRatio_ServoDiff + min;
 }
 
+float scale2(float x, uint16_t x_min, uint16_t x_max, uint16_t y_min, uint16_t  y_max){
+	uint16_t output_range = y_max - y_min;
+	uint16_t input_range = x_max - x_min;
+	
+	float y;
+	y = (x - x_min) * (float) output_range / (float) input_range + y_min;
+	return y;
+}
+
 float calcDistance(float echo_duration){
 	//Distance in centimeters = echo_duration(μs)/58
 	return echo_duration / 58;
@@ -151,7 +163,7 @@ uint8_t limitSpeed(uint8_t maxSpeed, uint8_t distance){
 		return maxSpeed;
 	}
 	else if(15 < distance && distance < 25){ //return a scaled speed to relative to the distance from the car ahead 
-		return scale(distance, 0, maxSpeed); //**TODO** confirm scale function works  
+		return scale2(distance, 0, 25, 0, maxSpeed); //**TODO** confirm scale function works  
 	}
 	else if(distance < 15){ //if car ahead is getting too close,STOP
 		return 0;
@@ -178,8 +190,8 @@ int main ( void ){
 	uint8_t currentSpeed;
 	uint8_t distance;
 
-	char spdStr[3];
-	char dstStr[3];
+	char *spdStr;
+	char *dstStr;
 
 	/* Call configuration routines */
 	configClock();  //Sets the clock to 40MHz using FRC and PLL
@@ -193,6 +205,7 @@ int main ( void ){
 	configADC1_ManualCH0(RA1_AN, 31, 0);        // configures ADC 
 
 	/* Initialize ports and other one-time code */
+	outStringLCD("Initializing");
 	_T3IF = 0;
 	_T3IE = 1;
 	_T2IF = 0;
@@ -208,15 +221,14 @@ int main ( void ){
 
 		/* collect & compute inputs*/
 		distance = calcDistance(fall_time - rise_time);
-		maxSpeed = scale(convertADC1(), P_CONT_MIN, P_CONT_MAX);
+		maxSpeed = scale2(convertADC1(), ADC_MIN, ADC_MAX, P_CONT_MIN, P_CONT_MAX);
 		currentSpeed = limitSpeed(maxSpeed, distance);
-
 
 		switch(TOGGLE_CRUISE){
 			/* CRUISE CONTROL DE-ACTIVATED*/
 			case 0:
                 		pwmCont = maxSpeed;
-				displayDashboard(currentSpeed, distance, spdStr, dstStr);
+				displayDashboard(maxSpeed, distance, spdStr, dstStr);
                 		break;
                 
             		/*CRUISE CONTROL ACTIVATED*/
