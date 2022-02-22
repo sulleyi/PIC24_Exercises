@@ -10,6 +10,7 @@
 // #include for textbook library header files
 #include "pic24_all.h"
 #include "lcd4bit_lib.h"
+#include "stdio.h"
 
 // #defines for handy constant macros (uppercase by convention)
 #define POT (_RA1)     // Control Motor Speed
@@ -33,6 +34,8 @@ volatile uint16_t rise_time;
 volatile uint16_t fall_time;
     
 uint16_t pwmCont; // PWM for continuous servo 
+
+char str[3];
 
 void configTimer2(void){
     
@@ -75,13 +78,13 @@ void configTimer3(){
     PR3 = 0xFFFF; //maximum value
     TMR3 = 0; // init timer to 0
     _T3IF = 0; // init flag to 0
-    T3CONbits.TON = 1;  // Turn on Timer 2
+    T3CONbits.TON = 1;  // Turn on Timer 3
 }
 
 void configIC1(void){
 	T3CONbits.TON=0; //Turn off timer 3
 	CONFIG_IC1_TO_RP(RB4_RP);//attach input capture to RB4 (pin 11)
-	IC1CONbits.ICTMR = 1; // Uses timer 3
+	IC1CONbits.ICTMR = 0; // Uses timer 3
 	IC1CONbits.ICI= 0b00;
 	IC1CONbits.ICM= 0b001;
 }
@@ -115,9 +118,8 @@ void   _ISR   _IC1Interrupt(void){
 	}
 }
 
-
 /* Return  num in ASCII format 000*/
-char *numToASCII(uint8_t num, char *str){
+char *numToASCII(uint8_t num){
     	uint16_t Nint = num;
 	str[0] =0x30;str[1] = 0x30; str[2] = 0x30; //formated ASCII
     
@@ -136,14 +138,6 @@ char *numToASCII(uint8_t num, char *str){
 	return str;
 }
 
-/*TODO make sure this scale works for all uses (both limiting speed & reading potentiometer value*/
-float scale(float reading, uint16_t min, uint16_t max){
-    float readRatio = ( (float) reading *  3.3) / 1023;
-    uint16_t ServoDiff = max - min; // calculates difference in servo
-    float readRatio_ServoDiff = readRatio * ServoDiff;
-    return readRatio_ServoDiff + min;
-}
-
 float scale2(float x, uint16_t x_min, uint16_t x_max, uint16_t y_min, uint16_t  y_max){
 	uint16_t output_range = y_max - y_min;
 	uint16_t input_range = x_max - x_min;
@@ -158,96 +152,135 @@ float calcDistance(float echo_duration){
 	return echo_duration / 58;
 }
 
-uint8_t limitSpeed(uint8_t maxSpeed, uint8_t distance){
-	if(distance > 25){ //if no car ahead, go full speed 
-		return maxSpeed;
-	}
-	else if(15 < distance && distance < 25){ //return a scaled speed to relative to the distance from the car ahead 
-		return scale2(distance, 0, 25, 0, maxSpeed); //**TODO** confirm scale function works  
+uint16_t limitSpeed(uint16_t maxSpeed, float distance){
+	if(15 < distance && distance < 25){ //return a scaled speed to relative to the distance from the car ahead 
+		return scale2(distance, 15, 25, 234, maxSpeed); //**TODO** confirm scale function works  
 	}
 	else if(distance < 15){ //if car ahead is getting too close,STOP
 		return 0;
 	}
-	return 0;
+	else return maxSpeed;
 }
 
-void displayDashboard(uint8_t speed, uint8_t distance, char *spdStr, char *distStr){
-    writeLCD(0xC0, 0, 0, 1); //Write command to position cursor at 0x40
-    outStringLCD("Speed: ");
-    writeLCD(0xCA, 0, 0, 1); //Write command to position cursor at 0x40
-    outStringLCD(numToASCII(speed, spdStr));
-    writeLCD(0xC0, 0, 0, 1); //Write command to position cursor at 0x40
-    outStringLCD("Distance: ");
-    writeLCD(0xCA, 0, 0, 1); //Write command to position cursor at 0x40
-    outStringLCD(numToASCII(distance, distStr));
+void displayDashboard(uint8_t speed, uint8_t distance){
+	writeLCD(0x80, 0, 0, 1); //Write command to position cursor at 0x40
+	outStringLCD("Speed:          ");
+	writeLCD(0x8A, 0, 0, 1); //Write command to position cursor at 0x40
+	numToASCII(speed);
+	outStringLCD(str);
+	writeLCD(0xC0, 0, 0, 1); //Write command to position cursor at 0x40
+	outStringLCD("Distance: ");
+	writeLCD(0xCA, 0, 0, 1); //Write command to position cursor at 0x40
+    	numToASCII(distance);
+	outStringLCD(str);
 }
 
-uint32_t pulseUltrasonic(void){
+float pulseUltrasonic(void){
 	TRIG = 1;
 	DELAY_US(10);
 	TRIG = 0;
 	echo_rise = 1;
 	while(!echo_fall){
 	}
-	uint32_t echo_duration = fall_time - rise_time; //in Tcks
-	echo_duration = echo_duration *1.6;
+	float echo_duration = fall_time - rise_time; //in Tcks
+	echo_duration = echo_duration *1.6; //in us
+	echo_fall = 0;
+	DELAY_US(50);
 	return echo_duration;
 }
 
 /********** MAIN PROGRAM ********************************/
 int main ( void ){
 	/* Declare local variables */
-	uint8_t maxSpeed;
-	uint8_t currentSpeed;
-	uint8_t distance;
-	uint32_t echo_duration;
-	char *spdStr;
-	char *dstStr;
+	uint16_t maxSpeed;
+	uint16_t cruiseSpeed;
+	float echo_pulse;
+	float distance;
 
 	/* Call configuration routines */
 	configClock();  //Sets the clock to 40MHz using FRC and PLL
 	configTimer2();
+	configTimer3();
 	configIO();
 	configOC1();
 	configIC1();
 	configControlLCD(); //configures the RS, RW and E control lines as outputs and initializes them low
 	initLCD(); // initialization LCD: clears the screen and sets the cursor position to upper left (home)
-	configTimer3();
 	configSensor();
 	configADC1_ManualCH0(RA1_AN, 31, 0);        // configures ADC 
+	configUART1(230400);
 
 	/* Initialize ports and other one-time code */
 	outStringLCD("Initializing");
+	printf("\e[1;1H\e[2J");//Write a null-terminated string to the serial port. 
+	printf("Initializing...\n\r");
+    
 	pwmCont = 234; // setting pwm to midway for cont servo
-	_T3IF = 0;
-	_T3IE = 1;
+	
 	_T2IF = 0;
 	_T2IE = 1;
 	T2CONbits.TON = 1;
+	
+	TRIG = 0;
+	echo_rise = 1;
+	echo_fall = 0;
+	_IC1IE = 1;
 	T3CONbits.TON = 1;
 	DELAY_MS(500);
-  
+
 	/* Main program loop */
 	while (1) {
-
+        
 		/* collect & compute inputs*/
-		echo_duration = pulseUltrasonic();
-		distance = calcDistance(echo_duration);
-		maxSpeed = scale2(convertADC1(), ADC_MIN, ADC_MAX, P_CONT_MIN, P_CONT_MAX);
-		currentSpeed = limitSpeed(maxSpeed, distance);
+        printf("----Main While-------\n\r");
+	//	echo_pulse = pulseUltrasonic();
+	
+	TRIG = 1;
+	DELAY_US(10);
+	TRIG = 0;
+	echo_rise = 1;
+	while(!echo_fall){
+	}
+	float echo_duration = fall_time - rise_time; //in Tcks
+	echo_duration = echo_duration *1.6; //in us
+        distance = calcDistance(echo_duration);
+	echo_fall = 0;
+	DELAY_US(50);
+	maxSpeed = scale2(convertADC1(), ADC_MIN, ADC_MAX, 234, P_CONT_MAX);
+	cruiseSpeed = limitSpeed(maxSpeed, distance);
+        
+	printf("Echo pulse time: %f \n\r", echo_duration);
+        printf("Distance %f \n\r", distance);
+        printf("Max Speed:  %d\n\r", maxSpeed);
+        printf("Cruise Speed: %d\n\r", cruiseSpeed);
+        printf("PWM signal: %d \n\r", pwmCont);
+        printf("---- End Main While-------\n\r");
+        printf("\e[1;1H\e[2J");//Write a null-terminated string to the serial port.
+
+        printf("----SWITCH-----\n\r");
 
 		switch(TOGGLE_CRUISE){
 			/* CRUISE CONTROL DE-ACTIVATED*/
-			case 0:
+        	case 0:
                 pwmCont = maxSpeed;
-				displayDashboard(maxSpeed, distance, spdStr, dstStr);
+                printf("CC Inactive\n\r");
+                printf("PWM signal: %d \n\r", pwmCont);
+                printf("Distance: %f \n\r", distance);
+                printf("\e[1;1H\e[2J");//Write a null-terminated string to the serial port.
+                
+		displayDashboard(maxSpeed, distance);
                 break;
                 
             /*CRUISE CONTROL ACTIVATED*/
             case 1:
-                pwmCont = limitSpeed(maxSpeed, distance);
-				displayDashboard(currentSpeed, distance, spdStr, dstStr);
-				break;
+                printf("CC Active\n\r");
+                printf("PWM signal: %d \n\r", pwmCont);
+                printf("Distance: %f \n\r", distance);
+                printf("\e[1;1H\e[2J");//Write a null-terminated string to the serial port.
+                pwmCont = cruiseSpeed;
+                
+		displayDashboard(cruiseSpeed, distance);
+		break;
 	    }
 	}
 	return 0;

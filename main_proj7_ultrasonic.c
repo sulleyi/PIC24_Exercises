@@ -86,7 +86,7 @@ float echo_duration;
 
 /* Call configuration routines */
 	configClock();  //Sets the clock to 40MHz using FRC and PLL
-	configUART1(230400);
+//	configUART1(230400);
 	configIC1();
 	configTimer2();
 	configSensor();
@@ -95,7 +95,7 @@ float echo_duration;
 TRIG = 0;
 echo_rise = 1;
 echo_fall = 0;
-printf("\e[1;1H\e[2J");//Write a null-terminated string to the serial port. 
+//printf("\e[1;1H\e[2J");//Write a null-terminated string to the serial port. 
 _IC1IE = 1;
 T2CONbits.TON = 1;
 
@@ -111,8 +111,8 @@ T2CONbits.TON = 1;
 		echo_duration = fall_time - rise_time; //in Tcks
 		echo_duration = echo_duration *1.6;
 		distance = calcDistance(echo_duration);
-		printf("\e[1;1H\e[2J");//Write a null-terminated string to the serial port. 
-		printf("Distance:  %3.2f  cm\n\r", (double) distance);	//print to serial
+//		printf("\e[1;1H\e[2J");//Write a null-terminated string to the serial port. 
+//		printf("Distance:  %3.2f  cm\n\r", (double) distance);	//print to serial
 		echo_fall = 0;
 		DELAY_US(50);
 		}
