@@ -10,7 +10,7 @@
 // #include for textbook library header files
 #include "pic24_all.h"
 #include "lcd4bit_lib.h"
-#include "stdio.h"
+//#include "stdio.h"
 
 // #defines for handy constant macros (uppercase by convention)
 #define POT (_RA1)     // Control Motor Speed
@@ -138,12 +138,13 @@ char *numToASCII(uint8_t num){
 	return str;
 }
 
-float scale2(float x, uint16_t x_min, uint16_t x_max, uint16_t y_min, uint16_t  y_max){
-	uint16_t output_range = y_max - y_min;
+uint16_t scale2(uint16_t x, uint16_t x_min, uint16_t x_max, uint16_t y_min, uint16_t  y_max){
+	
+    uint16_t output_range = y_max - y_min;
 	uint16_t input_range = x_max - x_min;
 	
-	float y;
-	y = (x - x_min) * (float) output_range / (float) input_range + y_min;
+	uint16_t y;
+	y = (x - x_min) * (float) output_range / input_range + y_min;
 	return y;
 }
 
@@ -171,7 +172,7 @@ void displayDashboard(uint8_t speed, uint8_t distance){
 	writeLCD(0xC0, 0, 0, 1); //Write command to position cursor at 0x40
 	outStringLCD("Distance: ");
 	writeLCD(0xCA, 0, 0, 1); //Write command to position cursor at 0x40
-    	numToASCII(distance);
+    numToASCII(distance);
 	outStringLCD(str);
 }
 
@@ -212,8 +213,8 @@ int main ( void ){
 
 	/* Initialize ports and other one-time code */
 	outStringLCD("Initializing");
-	printf("\e[1;1H\e[2J");//Write a null-terminated string to the serial port. 
-	printf("Initializing...\n\r");
+	//printf("\e[1;1H\e[2J");//Write a null-terminated string to the serial port. 
+	//printf("Initializing...\n\r");
     
 	pwmCont = 234; // setting pwm to midway for cont servo
 	
@@ -232,7 +233,7 @@ int main ( void ){
 	while (1) {
         
 		/* collect & compute inputs*/
-        printf("----Main While-------\n\r");
+     //   printf("----Main While-------\n\r");
 	//	echo_pulse = pulseUltrasonic();
 	
 	TRIG = 1;
@@ -249,34 +250,34 @@ int main ( void ){
 	maxSpeed = scale2(convertADC1(), ADC_MIN, ADC_MAX, 234, P_CONT_MAX);
 	cruiseSpeed = limitSpeed(maxSpeed, distance);
         
-	printf("Echo pulse time: %f \n\r", echo_duration);
-        printf("Distance %f \n\r", distance);
-        printf("Max Speed:  %d\n\r", maxSpeed);
-        printf("Cruise Speed: %d\n\r", cruiseSpeed);
-        printf("PWM signal: %d \n\r", pwmCont);
-        printf("---- End Main While-------\n\r");
-        printf("\e[1;1H\e[2J");//Write a null-terminated string to the serial port.
+	//printf("Echo pulse time: %f \n\r", echo_duration);
+        //printf("Distance %f \n\r", distance);
+        //printf("Max Speed:  %d\n\r", maxSpeed);
+        //printf("Cruise Speed: %d\n\r", cruiseSpeed);
+        //printf("PWM signal: %d \n\r", pwmCont);
+        //printf("---- End Main While-------\n\r");
+        //printf("\e[1;1H\e[2J");//Write a null-terminated string to the serial port.
 
-        printf("----SWITCH-----\n\r");
+        //printf("----SWITCH-----\n\r");
 
 		switch(TOGGLE_CRUISE){
 			/* CRUISE CONTROL DE-ACTIVATED*/
         	case 0:
                 pwmCont = maxSpeed;
-                printf("CC Inactive\n\r");
-                printf("PWM signal: %d \n\r", pwmCont);
-                printf("Distance: %f \n\r", distance);
-                printf("\e[1;1H\e[2J");//Write a null-terminated string to the serial port.
+                //printf("CC Inactive\n\r");
+                //printf("PWM signal: %d \n\r", pwmCont);
+                //printf("Distance: %f \n\r", distance);
+                //printf("\e[1;1H\e[2J");//Write a null-terminated string to the serial port.
                 
 		displayDashboard(maxSpeed, distance);
                 break;
                 
             /*CRUISE CONTROL ACTIVATED*/
             case 1:
-                printf("CC Active\n\r");
-                printf("PWM signal: %d \n\r", pwmCont);
-                printf("Distance: %f \n\r", distance);
-                printf("\e[1;1H\e[2J");//Write a null-terminated string to the serial port.
+                //printf("CC Active\n\r");
+                //printf("PWM signal: %d \n\r", pwmCont);
+                //printf("Distance: %f \n\r", distance);
+                //printf("\e[1;1H\e[2J");//Write a null-terminated string to the serial port.
                 pwmCont = cruiseSpeed;
                 
 		displayDashboard(cruiseSpeed, distance);
