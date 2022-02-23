@@ -20,7 +20,10 @@ int main ( void )  //main function that....
 { 
 /* Declare local variables */
 uint8_t send_bits;
-uint8_t ack_bits;
+uint8_t addr = 0b1001101;
+uint8_t read_temp = 0x00H;
+uint8_t read_write_config = 0x01H;
+
 
 uint16_t temp;
 
@@ -33,13 +36,19 @@ uint16_t temp;
 /* Initialize ports and other one-time code */
 putI2C1(send_bits);
 temp = getI2C1(ack_bits);
+printf("Temperature (C): %d", temp);
 DELAY_MS(100);
+
+send_bits = 1001101 0 00H// READ TEMP OP
+send_bits = 1001101 1 01H  // WRITE CONFIG OP
+
+	
 
 /* Main program loop */
 	while (1) {	
 		putI2C1(send_bits);
-		temp = getI2C1(ack_bits);
-
+		temp = getI2C1(1);
+		printf("Temperature (C): %d", temp);
 		DELAY_MS(100);
 		}
 return 0;
