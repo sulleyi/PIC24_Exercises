@@ -29,6 +29,7 @@
         <itemPath>../pic24_code_examples/lib/src/pic24_stdio_uart.c</itemPath>
       </logicalFolder>
       <itemPath>../main_ex8_keypad.c</itemPath>
+      <itemPath>../main_keypad_SM.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
