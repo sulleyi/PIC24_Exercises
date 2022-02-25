@@ -44,7 +44,18 @@ void config_keypad(void) {
 	_TRISB5 = 0; _TRISB4 = 0; _TRISB3 = 0; //Pin 14,11,7 outputs
 }
 uint8_t get_row(void) {  //return the row of the key pressed
-
+	if(!R0){
+		return 0;
+	}
+	if(!R1){
+		return 1;
+	}
+	if(!R2){
+		return 2;
+	}
+	if(!R3){
+		return 3;
+	}
 }
 // Function to print key	
 void print_key(uint8_t row, uint8_t col) {
@@ -131,12 +142,12 @@ void SM_fct(void) {
 }
 int main(void) {
     configClock();
-	configTimer2();
+    configTimer2();
     config_keypad();  //Set up RB pins connected to keypad
     configUART1(230400);  //Set up serial port
     outString("Keypad Demo \n \r");
     T2CONbits.TON = 1;  // Turn on timer
-	_T2IE = 1; //Enable Timer 2 interrupts
+    _T2IE = 1; //Enable Timer 2 interrupts
     // Local variable for column 
 
     state = S_C0;  //set initial state 
