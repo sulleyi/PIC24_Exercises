@@ -1,24 +1,24 @@
 /*
  * File:   main_keypad_SM.c
- * Author: CT
+ * Author: Ian Sulley and Gabriel Seger
  * 
- * The value of a keypad press is displayed to a screen using
- * a serial connection.
  * 
  * This program uses a state machine to detect a key pressed and print key to serial monitor
  */
 
 #include "pic24_all.h"           //generic header for PIcol24H family */         
+#include <stdio.h>
+#include "lcd4bit_lib.h" // include this lcd library
 
 // Define row pins
 #define R0 (_RB15)
 #define R1 (_RB12)
-#define R2 (_RB13)
-#define R3 (_RB14)
+#define R2 (_RB4)
+#define R3 (_RB2)
 
 // Define column pins
-#define C0 (_LATB4)
-#define C1 (_LATB5)
+#define C0 (_LATB0)
+#define C1 (_LATB1)
 #define C2 (_LATB3)
 // Value to check if any key is pressed
 #define KP() (!R0 || !R1 || !R2 || !R3)
@@ -39,31 +39,51 @@ char keypad_table[4][3] =
 
 void config_keypad(void) {
 	AD1PCFGL = 0xFFFF;  //Using all digital I/O
-    _TRISB15 = 1; _TRISB14 = 1; _TRISB13 = 1; _TRISB12 = 1; // Pin 26,25,24,23 inputs
-    _CN11PUE = 1; _CN12PUE = 1; _CN13PUE = 1; _CN14PUE = 1; // Enable pull-up resistor on pins 26,25,24,23
-	_TRISB5 = 0; _TRISB4 = 0; _TRISB3 = 0; //Pin 14,11,7 outputs
+    _TRISB15 = 1; _TRISB2 = 1; _TRISB4 = 1; _TRISB12 = 1; // Pin 26,6,11,23 inputs
+    _CN6PUE = 1; _CN11PUE = 1; _CN1PUE = 1; _CN14PUE = 1; // Enable pull-up resistor on pins 6,26,11,23
+	_TRISB0 = 0; _TRISB1 = 0; _TRISB3 = 0; //Pin 4,5,7 outputs
 }
 uint8_t get_row(void) {  //return the row of the key pressed
-	if(!R0){
-		return 0;
-	}
-	if(!R1){
-		return 1;
-	}
-	if(!R2){
-		return 2;
-	}
-	if(!R3){
-		return 3;
-	}
+    //uint8_t row;
+    if(!R0){
+        return 0;
+    }else if(!R1){
+        return 1;
+    }else if(!R2){
+        return 2;
+    }else {
+        return 3;
+    }
 }
 // Function to print key	
 void print_key(uint8_t row, uint8_t col) {
-    char key = keypad_table[row][col];
-    outString("Key Pressed:  ");
-    outChar(key); 
-    outChar('\n'); //new line
-    outChar('\r'); //return
+    
+    if(row == 0 && col == 0){
+        outString("1");
+    }else if(row == 0 && col == 1){
+        outString("2");
+    }else if(row == 0 && col == 2){
+        outString("3");
+    }else if(row == 1 && col == 0){
+        outString("4");
+    }else if(row == 1 && col == 1){
+        outString("5");
+    }else if(row == 1 && col == 2){
+        outString("6");
+    }else if(row == 2 && col == 0){
+        outString("7");
+    }else if(row == 2 && col == 1){
+        outString("8");
+    }else if(row == 2 && col == 2){
+        outString("9");
+    }else if(row == 3 && col == 0){
+        outString("*");
+    }else if(row == 3 && col == 1){
+        outString("0");
+    }else if(row == 3 && col == 2){
+        outString("#");
+    }
+          
     }          
 void configTimer2(void) {
     T2CON = 0x0030; //TMR2 off, FCY clk, prescale 1:256
@@ -142,12 +162,15 @@ void SM_fct(void) {
 }
 int main(void) {
     configClock();
-    configTimer2();
+	configTimer2(); // used for keypad
     config_keypad();  //Set up RB pins connected to keypad
-    configUART1(230400);  //Set up serial port
-    outString("Keypad Demo \n \r");
+    configControlLCD(); // configures the RS, RW and E control lines as outputs and initializes them low
+    initLCD();// clears the screen 
+    CONFIG_RA1_AS_DIG_OUTPUT(); //Sets pin 3 to digital output, used for buzzer
+    
+    //outString("Keypad Demo \n \r");
     T2CONbits.TON = 1;  // Turn on timer
-    _T2IE = 1; //Enable Timer 2 interrupts
+	_T2IE = 1; //Enable Timer 2 interrupts, keypad
     // Local variable for column 
 
     state = S_C0;  //set initial state 
