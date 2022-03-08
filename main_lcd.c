@@ -30,7 +30,6 @@ int main ( void )  //main function that....
 
 /* Call configuration routines */
 	configClock();  //Sets the clock to 40MHz using FRC and PLL
-//  configBasic(HELLO_MSG);  //This can be used instead of the above if connected to terminal	
     configControlLCD(); //configures the RS, RW and E control lines as outputs and initializes them low
     initLCD(); // executes the initialization sequence specified in the Hitachi HD44780 LCD controller datasheet, clears the screen and sets the cursor position to upper left (home)
     
