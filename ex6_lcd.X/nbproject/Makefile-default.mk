@@ -57,17 +57,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=../main_lcd.c ../lcd4bit_lib.c ../pic24_code_examples/lib/src/pic24_timer.c ../pic24_code_examples/lib/src/dataXfer.c ../pic24_code_examples/lib/src/pic24_util.c ../pic24_code_examples/lib/src/dataXferImpl.c ../pic24_code_examples/lib/src/pic24_flash.c ../pic24_code_examples/lib/src/pic24_spi.c ../pic24_code_examples/lib/src/pic24_i2c.c ../pic24_code_examples/lib/src/pic24_ecan.c ../pic24_code_examples/lib/src/pic24_configbits.c ../pic24_code_examples/lib/src/pic24_serial.c ../pic24_code_examples/lib/src/pic24_adc.c ../pic24_code_examples/lib/src/pic24_clockfreq.c ../pic24_code_examples/lib/src/pic24_uart.c ../pic24_code_examples/lib/src/pic24_stdio_uart.c
+SOURCEFILES_QUOTED_IF_SPACED=../pic24_code_examples/lib/src/pic24_timer.c ../pic24_code_examples/lib/src/dataXfer.c ../pic24_code_examples/lib/src/pic24_util.c ../pic24_code_examples/lib/src/dataXferImpl.c ../pic24_code_examples/lib/src/pic24_flash.c ../pic24_code_examples/lib/src/pic24_spi.c ../pic24_code_examples/lib/src/pic24_i2c.c ../pic24_code_examples/lib/src/pic24_ecan.c ../pic24_code_examples/lib/src/pic24_configbits.c ../pic24_code_examples/lib/src/pic24_serial.c ../pic24_code_examples/lib/src/pic24_adc.c ../pic24_code_examples/lib/src/pic24_clockfreq.c ../pic24_code_examples/lib/src/pic24_uart.c ../pic24_code_examples/lib/src/pic24_stdio_uart.c ../main_lcd.c ../lcd4bit_lib.c
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/_ext/1472/main_lcd.o ${OBJECTDIR}/_ext/1472/lcd4bit_lib.o ${OBJECTDIR}/_ext/1815454428/pic24_timer.o ${OBJECTDIR}/_ext/1815454428/dataXfer.o ${OBJECTDIR}/_ext/1815454428/pic24_util.o ${OBJECTDIR}/_ext/1815454428/dataXferImpl.o ${OBJECTDIR}/_ext/1815454428/pic24_flash.o ${OBJECTDIR}/_ext/1815454428/pic24_spi.o ${OBJECTDIR}/_ext/1815454428/pic24_i2c.o ${OBJECTDIR}/_ext/1815454428/pic24_ecan.o ${OBJECTDIR}/_ext/1815454428/pic24_configbits.o ${OBJECTDIR}/_ext/1815454428/pic24_serial.o ${OBJECTDIR}/_ext/1815454428/pic24_adc.o ${OBJECTDIR}/_ext/1815454428/pic24_clockfreq.o ${OBJECTDIR}/_ext/1815454428/pic24_uart.o ${OBJECTDIR}/_ext/1815454428/pic24_stdio_uart.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/_ext/1472/main_lcd.o.d ${OBJECTDIR}/_ext/1472/lcd4bit_lib.o.d ${OBJECTDIR}/_ext/1815454428/pic24_timer.o.d ${OBJECTDIR}/_ext/1815454428/dataXfer.o.d ${OBJECTDIR}/_ext/1815454428/pic24_util.o.d ${OBJECTDIR}/_ext/1815454428/dataXferImpl.o.d ${OBJECTDIR}/_ext/1815454428/pic24_flash.o.d ${OBJECTDIR}/_ext/1815454428/pic24_spi.o.d ${OBJECTDIR}/_ext/1815454428/pic24_i2c.o.d ${OBJECTDIR}/_ext/1815454428/pic24_ecan.o.d ${OBJECTDIR}/_ext/1815454428/pic24_configbits.o.d ${OBJECTDIR}/_ext/1815454428/pic24_serial.o.d ${OBJECTDIR}/_ext/1815454428/pic24_adc.o.d ${OBJECTDIR}/_ext/1815454428/pic24_clockfreq.o.d ${OBJECTDIR}/_ext/1815454428/pic24_uart.o.d ${OBJECTDIR}/_ext/1815454428/pic24_stdio_uart.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/_ext/1815454428/pic24_timer.o ${OBJECTDIR}/_ext/1815454428/dataXfer.o ${OBJECTDIR}/_ext/1815454428/pic24_util.o ${OBJECTDIR}/_ext/1815454428/dataXferImpl.o ${OBJECTDIR}/_ext/1815454428/pic24_flash.o ${OBJECTDIR}/_ext/1815454428/pic24_spi.o ${OBJECTDIR}/_ext/1815454428/pic24_i2c.o ${OBJECTDIR}/_ext/1815454428/pic24_ecan.o ${OBJECTDIR}/_ext/1815454428/pic24_configbits.o ${OBJECTDIR}/_ext/1815454428/pic24_serial.o ${OBJECTDIR}/_ext/1815454428/pic24_adc.o ${OBJECTDIR}/_ext/1815454428/pic24_clockfreq.o ${OBJECTDIR}/_ext/1815454428/pic24_uart.o ${OBJECTDIR}/_ext/1815454428/pic24_stdio_uart.o ${OBJECTDIR}/_ext/1472/main_lcd.o ${OBJECTDIR}/_ext/1472/lcd4bit_lib.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/_ext/1815454428/pic24_timer.o.d ${OBJECTDIR}/_ext/1815454428/dataXfer.o.d ${OBJECTDIR}/_ext/1815454428/pic24_util.o.d ${OBJECTDIR}/_ext/1815454428/dataXferImpl.o.d ${OBJECTDIR}/_ext/1815454428/pic24_flash.o.d ${OBJECTDIR}/_ext/1815454428/pic24_spi.o.d ${OBJECTDIR}/_ext/1815454428/pic24_i2c.o.d ${OBJECTDIR}/_ext/1815454428/pic24_ecan.o.d ${OBJECTDIR}/_ext/1815454428/pic24_configbits.o.d ${OBJECTDIR}/_ext/1815454428/pic24_serial.o.d ${OBJECTDIR}/_ext/1815454428/pic24_adc.o.d ${OBJECTDIR}/_ext/1815454428/pic24_clockfreq.o.d ${OBJECTDIR}/_ext/1815454428/pic24_uart.o.d ${OBJECTDIR}/_ext/1815454428/pic24_stdio_uart.o.d ${OBJECTDIR}/_ext/1472/main_lcd.o.d ${OBJECTDIR}/_ext/1472/lcd4bit_lib.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/_ext/1472/main_lcd.o ${OBJECTDIR}/_ext/1472/lcd4bit_lib.o ${OBJECTDIR}/_ext/1815454428/pic24_timer.o ${OBJECTDIR}/_ext/1815454428/dataXfer.o ${OBJECTDIR}/_ext/1815454428/pic24_util.o ${OBJECTDIR}/_ext/1815454428/dataXferImpl.o ${OBJECTDIR}/_ext/1815454428/pic24_flash.o ${OBJECTDIR}/_ext/1815454428/pic24_spi.o ${OBJECTDIR}/_ext/1815454428/pic24_i2c.o ${OBJECTDIR}/_ext/1815454428/pic24_ecan.o ${OBJECTDIR}/_ext/1815454428/pic24_configbits.o ${OBJECTDIR}/_ext/1815454428/pic24_serial.o ${OBJECTDIR}/_ext/1815454428/pic24_adc.o ${OBJECTDIR}/_ext/1815454428/pic24_clockfreq.o ${OBJECTDIR}/_ext/1815454428/pic24_uart.o ${OBJECTDIR}/_ext/1815454428/pic24_stdio_uart.o
+OBJECTFILES=${OBJECTDIR}/_ext/1815454428/pic24_timer.o ${OBJECTDIR}/_ext/1815454428/dataXfer.o ${OBJECTDIR}/_ext/1815454428/pic24_util.o ${OBJECTDIR}/_ext/1815454428/dataXferImpl.o ${OBJECTDIR}/_ext/1815454428/pic24_flash.o ${OBJECTDIR}/_ext/1815454428/pic24_spi.o ${OBJECTDIR}/_ext/1815454428/pic24_i2c.o ${OBJECTDIR}/_ext/1815454428/pic24_ecan.o ${OBJECTDIR}/_ext/1815454428/pic24_configbits.o ${OBJECTDIR}/_ext/1815454428/pic24_serial.o ${OBJECTDIR}/_ext/1815454428/pic24_adc.o ${OBJECTDIR}/_ext/1815454428/pic24_clockfreq.o ${OBJECTDIR}/_ext/1815454428/pic24_uart.o ${OBJECTDIR}/_ext/1815454428/pic24_stdio_uart.o ${OBJECTDIR}/_ext/1472/main_lcd.o ${OBJECTDIR}/_ext/1472/lcd4bit_lib.o
 
 # Source Files
-SOURCEFILES=../main_lcd.c ../lcd4bit_lib.c ../pic24_code_examples/lib/src/pic24_timer.c ../pic24_code_examples/lib/src/dataXfer.c ../pic24_code_examples/lib/src/pic24_util.c ../pic24_code_examples/lib/src/dataXferImpl.c ../pic24_code_examples/lib/src/pic24_flash.c ../pic24_code_examples/lib/src/pic24_spi.c ../pic24_code_examples/lib/src/pic24_i2c.c ../pic24_code_examples/lib/src/pic24_ecan.c ../pic24_code_examples/lib/src/pic24_configbits.c ../pic24_code_examples/lib/src/pic24_serial.c ../pic24_code_examples/lib/src/pic24_adc.c ../pic24_code_examples/lib/src/pic24_clockfreq.c ../pic24_code_examples/lib/src/pic24_uart.c ../pic24_code_examples/lib/src/pic24_stdio_uart.c
+SOURCEFILES=../pic24_code_examples/lib/src/pic24_timer.c ../pic24_code_examples/lib/src/dataXfer.c ../pic24_code_examples/lib/src/pic24_util.c ../pic24_code_examples/lib/src/dataXferImpl.c ../pic24_code_examples/lib/src/pic24_flash.c ../pic24_code_examples/lib/src/pic24_spi.c ../pic24_code_examples/lib/src/pic24_i2c.c ../pic24_code_examples/lib/src/pic24_ecan.c ../pic24_code_examples/lib/src/pic24_configbits.c ../pic24_code_examples/lib/src/pic24_serial.c ../pic24_code_examples/lib/src/pic24_adc.c ../pic24_code_examples/lib/src/pic24_clockfreq.c ../pic24_code_examples/lib/src/pic24_uart.c ../pic24_code_examples/lib/src/pic24_stdio_uart.c ../main_lcd.c ../lcd4bit_lib.c
 
 
 
@@ -95,18 +95,6 @@ MP_LINKER_FILE_OPTION=,--script=p24HJ128GP502.gld
 # ------------------------------------------------------------------------------------
 # Rules for buildStep: compile
 ifeq ($(TYPE_IMAGE), DEBUG_RUN)
-${OBJECTDIR}/_ext/1472/main_lcd.o: ../main_lcd.c  .generated_files/flags/default/dc81a247bbfdadde6e802e9e3e76bece3c03eb90 .generated_files/flags/default/c3bcb89a839b6aab43a2e4502bbfa70e66d2d91a
-	@${MKDIR} "${OBJECTDIR}/_ext/1472" 
-	@${RM} ${OBJECTDIR}/_ext/1472/main_lcd.o.d 
-	@${RM} ${OBJECTDIR}/_ext/1472/main_lcd.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  ../main_lcd.c  -o ${OBJECTDIR}/_ext/1472/main_lcd.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/_ext/1472/main_lcd.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1    -omf=elf -DHARDWARE_PLATFORM=5 -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -I"../pic24_code_examples/lib/include" -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
-	
-${OBJECTDIR}/_ext/1472/lcd4bit_lib.o: ../lcd4bit_lib.c  .generated_files/flags/default/ccb5e3d3b1f52f373c0c73041eeaaf56f9e37218 .generated_files/flags/default/c3bcb89a839b6aab43a2e4502bbfa70e66d2d91a
-	@${MKDIR} "${OBJECTDIR}/_ext/1472" 
-	@${RM} ${OBJECTDIR}/_ext/1472/lcd4bit_lib.o.d 
-	@${RM} ${OBJECTDIR}/_ext/1472/lcd4bit_lib.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  ../lcd4bit_lib.c  -o ${OBJECTDIR}/_ext/1472/lcd4bit_lib.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/_ext/1472/lcd4bit_lib.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1    -omf=elf -DHARDWARE_PLATFORM=5 -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -I"../pic24_code_examples/lib/include" -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
-	
 ${OBJECTDIR}/_ext/1815454428/pic24_timer.o: ../pic24_code_examples/lib/src/pic24_timer.c  .generated_files/flags/default/433c347f669acf74b72453c5c2f36fbb2ba29b2d .generated_files/flags/default/c3bcb89a839b6aab43a2e4502bbfa70e66d2d91a
 	@${MKDIR} "${OBJECTDIR}/_ext/1815454428" 
 	@${RM} ${OBJECTDIR}/_ext/1815454428/pic24_timer.o.d 
@@ -191,19 +179,19 @@ ${OBJECTDIR}/_ext/1815454428/pic24_stdio_uart.o: ../pic24_code_examples/lib/src/
 	@${RM} ${OBJECTDIR}/_ext/1815454428/pic24_stdio_uart.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  ../pic24_code_examples/lib/src/pic24_stdio_uart.c  -o ${OBJECTDIR}/_ext/1815454428/pic24_stdio_uart.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/_ext/1815454428/pic24_stdio_uart.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1    -omf=elf -DHARDWARE_PLATFORM=5 -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -I"../pic24_code_examples/lib/include" -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
 	
-else
-${OBJECTDIR}/_ext/1472/main_lcd.o: ../main_lcd.c  .generated_files/flags/default/24903f1b8fa1b879c29659cec041c3032cbe9e3d .generated_files/flags/default/c3bcb89a839b6aab43a2e4502bbfa70e66d2d91a
+${OBJECTDIR}/_ext/1472/main_lcd.o: ../main_lcd.c  .generated_files/flags/default/dc81a247bbfdadde6e802e9e3e76bece3c03eb90 .generated_files/flags/default/c3bcb89a839b6aab43a2e4502bbfa70e66d2d91a
 	@${MKDIR} "${OBJECTDIR}/_ext/1472" 
 	@${RM} ${OBJECTDIR}/_ext/1472/main_lcd.o.d 
 	@${RM} ${OBJECTDIR}/_ext/1472/main_lcd.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  ../main_lcd.c  -o ${OBJECTDIR}/_ext/1472/main_lcd.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/_ext/1472/main_lcd.o.d"        -g -omf=elf -DHARDWARE_PLATFORM=5 -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -I"../pic24_code_examples/lib/include" -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ../main_lcd.c  -o ${OBJECTDIR}/_ext/1472/main_lcd.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/_ext/1472/main_lcd.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1    -omf=elf -DHARDWARE_PLATFORM=5 -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -I"../pic24_code_examples/lib/include" -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
 	
-${OBJECTDIR}/_ext/1472/lcd4bit_lib.o: ../lcd4bit_lib.c  .generated_files/flags/default/79d1b6f328e86c4e823e2ecb6ecc1f3ac2463679 .generated_files/flags/default/c3bcb89a839b6aab43a2e4502bbfa70e66d2d91a
+${OBJECTDIR}/_ext/1472/lcd4bit_lib.o: ../lcd4bit_lib.c  .generated_files/flags/default/ccb5e3d3b1f52f373c0c73041eeaaf56f9e37218 .generated_files/flags/default/c3bcb89a839b6aab43a2e4502bbfa70e66d2d91a
 	@${MKDIR} "${OBJECTDIR}/_ext/1472" 
 	@${RM} ${OBJECTDIR}/_ext/1472/lcd4bit_lib.o.d 
 	@${RM} ${OBJECTDIR}/_ext/1472/lcd4bit_lib.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  ../lcd4bit_lib.c  -o ${OBJECTDIR}/_ext/1472/lcd4bit_lib.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/_ext/1472/lcd4bit_lib.o.d"        -g -omf=elf -DHARDWARE_PLATFORM=5 -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -I"../pic24_code_examples/lib/include" -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ../lcd4bit_lib.c  -o ${OBJECTDIR}/_ext/1472/lcd4bit_lib.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/_ext/1472/lcd4bit_lib.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1    -omf=elf -DHARDWARE_PLATFORM=5 -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -I"../pic24_code_examples/lib/include" -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
 	
+else
 ${OBJECTDIR}/_ext/1815454428/pic24_timer.o: ../pic24_code_examples/lib/src/pic24_timer.c  .generated_files/flags/default/47427eef2ba876dc673d21bc1e0590cc07d0d30e .generated_files/flags/default/c3bcb89a839b6aab43a2e4502bbfa70e66d2d91a
 	@${MKDIR} "${OBJECTDIR}/_ext/1815454428" 
 	@${RM} ${OBJECTDIR}/_ext/1815454428/pic24_timer.o.d 
@@ -287,6 +275,18 @@ ${OBJECTDIR}/_ext/1815454428/pic24_stdio_uart.o: ../pic24_code_examples/lib/src/
 	@${RM} ${OBJECTDIR}/_ext/1815454428/pic24_stdio_uart.o.d 
 	@${RM} ${OBJECTDIR}/_ext/1815454428/pic24_stdio_uart.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  ../pic24_code_examples/lib/src/pic24_stdio_uart.c  -o ${OBJECTDIR}/_ext/1815454428/pic24_stdio_uart.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/_ext/1815454428/pic24_stdio_uart.o.d"        -g -omf=elf -DHARDWARE_PLATFORM=5 -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -I"../pic24_code_examples/lib/include" -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
+	
+${OBJECTDIR}/_ext/1472/main_lcd.o: ../main_lcd.c  .generated_files/flags/default/24903f1b8fa1b879c29659cec041c3032cbe9e3d .generated_files/flags/default/c3bcb89a839b6aab43a2e4502bbfa70e66d2d91a
+	@${MKDIR} "${OBJECTDIR}/_ext/1472" 
+	@${RM} ${OBJECTDIR}/_ext/1472/main_lcd.o.d 
+	@${RM} ${OBJECTDIR}/_ext/1472/main_lcd.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ../main_lcd.c  -o ${OBJECTDIR}/_ext/1472/main_lcd.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/_ext/1472/main_lcd.o.d"        -g -omf=elf -DHARDWARE_PLATFORM=5 -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -I"../pic24_code_examples/lib/include" -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
+	
+${OBJECTDIR}/_ext/1472/lcd4bit_lib.o: ../lcd4bit_lib.c  .generated_files/flags/default/79d1b6f328e86c4e823e2ecb6ecc1f3ac2463679 .generated_files/flags/default/c3bcb89a839b6aab43a2e4502bbfa70e66d2d91a
+	@${MKDIR} "${OBJECTDIR}/_ext/1472" 
+	@${RM} ${OBJECTDIR}/_ext/1472/lcd4bit_lib.o.d 
+	@${RM} ${OBJECTDIR}/_ext/1472/lcd4bit_lib.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ../lcd4bit_lib.c  -o ${OBJECTDIR}/_ext/1472/lcd4bit_lib.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/_ext/1472/lcd4bit_lib.o.d"        -g -omf=elf -DHARDWARE_PLATFORM=5 -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -I"../pic24_code_examples/lib/include" -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
 	
 endif
 

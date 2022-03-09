@@ -8,110 +8,138 @@
 /*********** COMPILER DIRECTIVES *********/
 
 #include "pic24_all.h"
-#include "lcd4bit_lib.c"
-#include "main_keypad_SM.c"
+#include "lcd4bit_lib.h"
+#include "keypad_SM.h"
+#include "stdio.h"
+#include "string.h"
+
+#define BUZZER _LATB2
+#define DETECTION _LATB14
+#define ACTIVE _LATB13
+
+// Define State Machine period to 1562 timer ticks of 6.4us
+#define period 1562
 /*********** GLOBAL VARIABLE AND FUNCTION DEFINITIONS *******/
+uint8_t AUTH = 0;
+
+char *password = "1001#";
 
 uint8_t centerMessage(uint8_t len){
     uint8_t offset = ((float)(16 - len))/ 2.0;
     return offset;
 }
 
-enum SM1_STATES { SM1_SMStart, SM1_DISARMED, SM1_ARMED, SM1_ALARM} SM1_STATE;
+void configTimer2(void) {
+    T2CON = 0x0030; //TMR2 off, FCY clk, prescale 1:256
+    PR2 = period; //delay = PWM_PERIOD
+    TMR2 = 0x0000; //clear the timer
+    _T2IF = 0; //clear interrupt flag initially
+}
+
+void printLCD(char *line1, char *line2){
+       
+    uint8_t len1= strlen(line1);
+    uint8_t len2= strlen(line2);
+    uint8_t offset1=centerMessage(len1);
+    uint8_t offset2=centerMessage(len2); 
+    writeLCD(0x80+offset1, 0, 0, 1);
+    outStringLCD(line1); //Write string 'Hello there!'
+
+    writeLCD(0xC0+offset2, 0, 0, 1); //Write command to position cursor at 0x40
+    outStringLCD(line2);//Write string 'Enjoy LCD Demo'
+}
+
+enum SM1_STATES { SM1_Reset, SM1_Active, SM1_Alarm, SM1_Override} SM1_STATE;
+
 void Tickfct(void) { 
+    char *line1;
+    char *line2;
+    
    switch(SM1_STATE) { 
-      case SM1_SMStart:
+      case SM1_Reset:
          if (1) {
-            SM1_STATE = SM1_DISARMED;
+            SM1_STATE = SM1_Active;
          }
          break;
-      case SM1_DISARMED:
-         if (BUTTON) {
-            SM1_STATE = SM1_ARMED;
+      case SM1_Active:
+         if (DETECTION && !AUTH) {
+            SM1_STATE = SM1_Alarm;
          }
-         else if (!BUTTON) {
-            SM1_STATE = SM1_DISARMED;
+         else if (!DETECTION && !AUTH) {
+            SM1_STATE = SM1_Active;
          }
-         else {
-            SM1_STATE = SM1_DISARMED;
-         }
-         break;
-      case SM1_ARMED:
-         if (currentTemp <  HOT) {
-            SM1_STATE = SM1_ARMED;
-         }
-         else if (currentTemp >= HOT) {
-            SM1_STATE = SM1_ALARM;
-         }
-         else {
-            SM1_STATE = SM1_ARMED;
+         else if(DETECTION && AUTH){
+            SM1_STATE = SM1_Override;
          }
          break;
-      case SM1_ALARM:
-         if (BUTTON) {
-            SM1_STATE = SM1_DISARMED;
+      case SM1_Alarm:
+         if (DETECTION && !AUTH) {
+            SM1_STATE = SM1_Alarm;
          }
-         else if (!BUTTON) {
-            SM1_STATE = SM1_ALARM;
+         else if (DETECTION && AUTH) {
+            SM1_STATE = SM1_Override;
+         }
+         else if (!DETECTION && !AUTH){
+            SM1_STATE = SM1_Active;
+         }
+         break;
+      case SM1_Override:
+         if (!DETECTION && AUTH) {
+            SM1_STATE = SM1_Reset;
+         }
+         else if (DETECTION && AUTH) {
+            SM1_STATE = SM1_Override;
          }
          else {
-            SM1_STATE = SM1_ALARM;
+            SM1_STATE = SM1_Override;
          }
          break;
       default:
-         SM1_STATE = SM1_DISARMED;
+         SM1_STATE = SM1_Reset;
          break;
    }
    switch(SM1_STATE) { 
-      case SM1_SMStart:
+      case SM1_Reset:
           BUZZER = 0;
-          outString("\e[1;1H\e[2J");//Clear serial display 
-          outString("Initializing...\n\r");
+          line1="Initializing";
+          printLCD(line1, "");
          break;
-      case SM1_DISARMED:
+      case SM1_Active:
          //DISPLAY: "DISARMED"
           BUZZER = 0;
-          outString("\e[1;1H\e[2J");//Clear serial display 
-          outString("DISARMED\n\r");// "Disarmed : Temp degrees F"
-          outString(str);
-          outString(" degrees F \n\r");
+          line1="No Detection";
+          line2="No Authorization";
+          printLCD(line1, line2);         
          break;
-      case SM1_ARMED:
-          BUZZER = 0;
-         //DISPLAY: "ARMED"
-          outString("\e[1;1H\e[2J");//Clear serial display 
-          outString("ARMED\n\r");
-         
-         break;
-      case SM1_ALARM:
-         BUZZER = 1; //Activate Buzzer
-		 // DISPLAY: "ALARM!"
-         outString("\e[1;1H\e[2J");//Clear serial display 
-         outString("ALARM! Press Button to Stop\n\r");   //"Alarm! Press Button to Stop!"
+      case SM1_Alarm:
+          BUZZER = 1;
+          line1="Detection!";
+          line2="No Authorization";
+          printLCD(line1, line2);         
+      case SM1_Override:
+         BUZZER = 0; //Activate Buzzer
+		 line1="Detection!";
+         line2="Authorized";
+         printLCD(line1, line2);
          break;
    }
 }
-    
+
 /********** MAIN PROGRAM ********************************/
-int main ( void )  //main function that....
-{ 
-/* Declare local variables */
-
-
-/* Call configuration routines */
-	configClock();  //Sets the clock to 40MHz using FRC and PLL
-    	configControlLCD(); //configures the RS, RW and E control lines as outputs and initializes them low
-    	initLCD(); // executes the initialization sequence specified in the Hitachi HD44780 LCD controller datasheet, clears the screen and sets the cursor position to upper left (home)
+int main(void) {
+    configClock();
+	configTimer2(); // used for keypad
+    config_keypad();  //Set up RB pins connected to keypad
+    configControlLCD(); // configures the RS, RW and E control lines as outputs and initializes them low
+    initLCD();// clears the screen
+    initSM();
+    CONFIG_RA1_AS_DIG_OUTPUT(); //Sets pin 3 to digital output, used for buzzer
     
-
-
-/* Initialize ports and other one-time code */
-
-
-    
-/* Main program loop */
-	while (1) {	
-		
-		}
-return 0;
+    //outString("Keypad Demo \n \r");
+    T2CONbits.TON = 1;  // Turn on timer
+	_T2IE = 1; //Enable Timer 2 interrupts, keypad
+    // Local variable for column 
+    while(1){
+        syncSM();
+    }
 }
