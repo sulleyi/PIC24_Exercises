@@ -17,8 +17,7 @@
 #define DETECTION _LATB14
 #define ACTIVE _LATB13
 
-// Define State Machine period to 1562 timer ticks of 6.4us
-#define period 1562
+
 /*********** GLOBAL VARIABLE AND FUNCTION DEFINITIONS *******/
 uint8_t AUTH = 0;
 
@@ -29,12 +28,6 @@ uint8_t centerMessage(uint8_t len){
     return offset;
 }
 
-void configTimer2(void) {
-    T2CON = 0x0030; //TMR2 off, FCY clk, prescale 1:256
-    PR2 = period; //delay = PWM_PERIOD
-    TMR2 = 0x0000; //clear the timer
-    _T2IF = 0; //clear interrupt flag initially
-}
 
 void printLCD(char *line1, char *line2){
        
@@ -42,6 +35,7 @@ void printLCD(char *line1, char *line2){
     uint8_t len2= strlen(line2);
     uint8_t offset1=centerMessage(len1);
     uint8_t offset2=centerMessage(len2); 
+    
     writeLCD(0x80+offset1, 0, 0, 1);
     outStringLCD(line1); //Write string 'Hello there!'
 
@@ -132,7 +126,6 @@ int main(void) {
     config_keypad();  //Set up RB pins connected to keypad
     configControlLCD(); // configures the RS, RW and E control lines as outputs and initializes them low
     initLCD();// clears the screen
-    initSM();
     CONFIG_RA1_AS_DIG_OUTPUT(); //Sets pin 3 to digital output, used for buzzer
     
     //outString("Keypad Demo \n \r");

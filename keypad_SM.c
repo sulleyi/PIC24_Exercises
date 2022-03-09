@@ -7,8 +7,9 @@
  */
 
 #include "pic24_all.h" //generic header for Pic24H family */         
-#include <stdio.h>
 #include "lcd4bit_lib.h" // include this lcd library
+#include "stdio.h"
+#include "string.h"
 
 // Define row pins
 #define R0 (_RB15)
@@ -23,10 +24,17 @@
 // Value to check if any key is pressed
 #define KP() (!R0 || !R1 || !R2 || !R3)
 
+/**display constants for Sparkfun serial LCD display*/
+#define CMD 0XFE  /**put display in command mode*/
+#define CLS 0X01  /**clear dispaly*/
 
+#define ENTER '#'
+#define CLR '*'
+// Define State Machine period to 1562 timer ticks of 6.4us
+#define period 1562
 
 volatile uint8_t t2flag = 0;  //timer flag to synchronize state machine
-
+char str_sample_period[16] = "0";    /**initializes period character array used to store user input*/
     // Lookup table for keypad
 char keypad_table[4][3] = 
 {
@@ -39,6 +47,13 @@ char keypad_table[4][3] =
 void _ISR _T2Interrupt(void){
     t2flag = 1;
     _T2IF = 0; //set the flag bit to 0
+}
+
+void configTimer2(void) {
+    T2CON = 0x0030; //TMR2 off, FCY clk, prescale 1:256
+    PR2 = period; //delay = PWM_PERIOD
+    TMR2 = 0x0000; //clear the timer
+    _T2IF = 0; //clear interrupt flag initially
 }
 
 void config_keypad(void) {
@@ -60,14 +75,23 @@ uint8_t get_row(void) {  //return the row of the key pressed
     }
 }
 // Function to print key	
-char print_key(uint8_t row, uint8_t col) { 
+void print_key(uint8_t row, uint8_t col) { 
     char key = keypad_table[row][col];
     outString("Key Pressed:  ");
     outChar(key); 
     outChar('\n'); //new line
     outChar('\r'); //return  
-    return key;
-}   
+} 
+
+/**
+ * Clears the Sparkfun serial LCD display
+ */
+void clearLCD(void) {
+    /** put display in command mode */
+    outChar(CMD);
+    /** clear display */
+    outChar(CLS);
+    }
 
 // Declare global state variable and states
 enum SM_states {S_C0, S_C1, S_C2, P, WR} state;
@@ -133,12 +157,23 @@ void SM_fct(void) {
 	}
 }
 
-void syncSM(void){
-    SM_fct();
-	while(!t2flag);
-	t2flag = 0;
-}
-
-void initSM(void){
-    state = S_C0;  //set initial state 
+char syncSM(void){
+    state = S_C0;  /**set initial state*/
+    char password[16] = "0";    /**initializes password character array used to store user input*/
+    
+    while(password[strlen(password)-1] != ENTER){ /**loop until the ENTER key is hit*/
+        if (password[strlen(password)-1] == CLR){ /**if the CLR key is pressed */
+            clearLCD();
+            outString("Passcode:");
+            password[0] = '\0';              /**clear sample_period_char*/            
+        }
+        SM_fct();
+        while(!t2flag);
+        t2flag = 0;
+    }
+    clearLCD();
+    outString("Entered password: ");
+    //password[strlen(password)-1] = '\0'; 
+    outString(password);
+    return password; 
 }
