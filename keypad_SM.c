@@ -157,7 +157,7 @@ void SM_fct(void) {
 	}
 }
 
-char syncSM(void){
+char *syncSM(void){
     state = S_C0;  /**set initial state*/
     char password[16] = "0";    /**initializes password character array used to store user input*/
     

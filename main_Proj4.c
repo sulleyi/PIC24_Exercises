@@ -21,7 +21,7 @@
 /*********** GLOBAL VARIABLE AND FUNCTION DEFINITIONS *******/
 uint8_t AUTH = 0;
 
-char *password = "1001#";
+char *PASSWORD = "1001#";
 
 uint8_t centerMessage(uint8_t len){
     uint8_t offset = ((float)(16 - len))/ 2.0;
@@ -121,8 +121,10 @@ void Tickfct(void) {
 
 /********** MAIN PROGRAM ********************************/
 int main(void) {
+    
+    char *enteredPassword; 
+    
     configClock();
-	configTimer2(); // used for keypad
     config_keypad();  //Set up RB pins connected to keypad
     configControlLCD(); // configures the RS, RW and E control lines as outputs and initializes them low
     initLCD();// clears the screen
@@ -133,6 +135,12 @@ int main(void) {
 	_T2IE = 1; //Enable Timer 2 interrupts, keypad
     // Local variable for column 
     while(1){
-        syncSM();
+        enteredPassword = syncSM();
+        if(enteredPassword == PASSWORD){
+            AUTH = 1;
+        }
+        else{
+            AUTH = 0;
+        }
     }
 }
