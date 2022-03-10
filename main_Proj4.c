@@ -14,13 +14,11 @@
 #include "string.h"
 
 #define BUZZER _LATB2
-#define DETECTION _LATB13
-#define PASS _LATB1
+#define DETECTION _LATB10
 
 /*********** GLOBAL VARIABLE AND FUNCTION DEFINITIONS *******/
 volatile uint8_t AUTH = 0;
 //uint8_t DETECTION = 1;
-
 
 uint8_t centerMessage(uint8_t len){
     uint8_t offset = ((float)(16 - len))/ 2.0;
@@ -102,7 +100,8 @@ void main_Tickfct(void) {
       case SM1_Alarm:
           BUZZER = 1;
           line1="D: 1 | A: 0";
-          printLCD(line1);         
+          printLCD(line1); 
+          break;
       case SM1_Override:
          BUZZER = 0; //Activate Buzzer
 		 line1="D: 1 | A: 1";
@@ -119,6 +118,7 @@ int main(void) {
     initLCD();// clears the screen
     initKeypad();
     CONFIG_RA1_AS_DIG_OUTPUT(); //Sets pin 3 to digital output, used for buzzer
+    CONFIG_RB10_AS_DIG_INPUT();
     SM1_STATE = SM1_Reset;
     //outString("Keypad Demo \n \r");
     T2CONbits.TON = 1;  // Turn on timer
@@ -127,6 +127,6 @@ int main(void) {
     while(1){
           main_Tickfct();
           keypad_syncSM();
-          AUTH = getAuth();   
+          AUTH = getAuth();
     }
 }

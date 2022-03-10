@@ -37,7 +37,7 @@ uint8_t keypad_auth = 0;
 char *PASSWORD = "1001#";
 
 volatile uint8_t t2flag = 0;  //timer flag to synchronize state machine
-char input_password[16];    /**password character array used to store user input*/
+char input_password[5];    /**password character array used to store user input*/
     // Lookup table for keypad
 char keypad_table[4][3] = 
 {
@@ -80,21 +80,31 @@ uint8_t get_row(void) {  //return the row of the key pressed
 // Function to print key	
 void print_key(uint8_t row, uint8_t col) { 
     char key = keypad_table[row][col];
-    outString("Key Pressed:  ");
+    outStringLCD("Key Pressed:  ");
     outChar(key); 
     outChar('\n'); //new line
     outChar('\r'); //return  
 } 
 
-/**
- * Clears the Sparkfun serial LCD display
- */
-void clearLCD(void) {
-    /** put display in command mode */
-    outChar(CMD);
-    /** clear display */
-    outChar(CLS);
+void reset_pw_capture(void){
+    input_password[0] = '\0'; /**initializes password character array used to store user input*/
+    writeLCD(0xC0, 0, 0, 1);
+    outStringLCD("PW: ");
+}
+void updateAuth(void) {
+    writeLCD(0xC0, 0, 0, 1);
+    outStringLCD("PW READ: ");
+    //password[strlen(password)-1] = '\0'; 
+    outStringLCD(input_password);
+    
+    if (strcmp(input_password, PASSWORD) == 0) {
+        keypad_auth = 1;
+    } else {
+        keypad_auth = 0;
     }
+    DELAY_MS(3000);
+    reset_pw_capture();
+}
 
 // Declare global state variable and states
 enum SM_states {S_C0, S_C1, S_C2, P, WR} state;
@@ -103,7 +113,7 @@ void SM_fct(void) {
 *  Outputs: C0, C1, C2
 *  Variables: col, row - col needs to be static because 
 *  it is used as a transition condition*/
-   uint8_t rw; // local row variable
+   uint8_t rw; // local row  
    static uint8_t col;  //static column variable - default initialization is 0 on first call
 	switch (state) { //transitions
 	    case S_C0:
@@ -151,7 +161,12 @@ void SM_fct(void) {
 		break;	 
 		case P:
 		   rw = get_row();
-		   print_key(rw, col);
+           strncat(input_password,&keypad_table[rw][col],1);
+           writeLCD(0xC4, 0, 0, 1);
+           outStringLCD(input_password);
+           if(keypad_table[rw][col] == ENTER){
+               updateAuth();
+           }
 		break;
 		case WR:
 		break;
@@ -159,39 +174,22 @@ void SM_fct(void) {
 		break;
 	}
 }
+
 void initKeypad(){
     configClock();
     configTimer2();
     T2CONbits.TON =1;
     _T2IE = 1;
+    state = S_C0;  /**set initial state*/
+    reset_pw_capture();
 }
 
 uint8_t getAuth(){
     return keypad_auth;
 }
 
-void keypad_syncSM(void){
-    state = S_C0;  /**set initial state*/
-    input_password[0] = '\0';    /**initializes password character array used to store user input*/
-    
-    while(input_password[strlen(input_password)-1] != ENTER){ /**loop until the ENTER key is hit*/
-        if (input_password[strlen(input_password)-1] == CLR){ /**if the CLR key is pressed */
-            clearLCD();
-            outString("Passcode: ");
-            input_password[0] = '\0';              /**clear password*/            
-        }
-        SM_fct();
-        while(!t2flag);
-        t2flag = 0;
-    }
-    clearLCD();
-    outString("Entered password: ");
-    //password[strlen(password)-1] = '\0'; 
-    outString(input_password);
-    if(input_password == PASSWORD){
-        keypad_auth = 1;
-    }
-    else{
-        keypad_auth = 0;
-    }
+void keypad_syncSM(void){    
+    SM_fct();
+    while(!t2flag);
+    t2flag = 0;    
 }
