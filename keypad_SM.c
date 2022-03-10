@@ -33,8 +33,11 @@
 // Define State Machine period to 1562 timer ticks of 6.4us
 #define period 1562
 
+uint8_t keypad_auth = 0;
+char *PASSWORD = "1001#";
+
 volatile uint8_t t2flag = 0;  //timer flag to synchronize state machine
-char str_sample_period[16] = "0";    /**initializes period character array used to store user input*/
+char input_password[16];    /**password character array used to store user input*/
     // Lookup table for keypad
 char keypad_table[4][3] = 
 {
@@ -156,16 +159,26 @@ void SM_fct(void) {
 		break;
 	}
 }
+void initKeypad(){
+    configClock();
+    configTimer2();
+    T2CONbits.TON =1;
+    _T2IE = 1;
+}
 
-char *syncSM(void){
+uint8_t getAuth(){
+    return keypad_auth;
+}
+
+void keypad_syncSM(void){
     state = S_C0;  /**set initial state*/
-    char password[16] = "0";    /**initializes password character array used to store user input*/
+    input_password[0] = '\0';    /**initializes password character array used to store user input*/
     
-    while(password[strlen(password)-1] != ENTER){ /**loop until the ENTER key is hit*/
-        if (password[strlen(password)-1] == CLR){ /**if the CLR key is pressed */
+    while(input_password[strlen(input_password)-1] != ENTER){ /**loop until the ENTER key is hit*/
+        if (input_password[strlen(input_password)-1] == CLR){ /**if the CLR key is pressed */
             clearLCD();
-            outString("Passcode:");
-            password[0] = '\0';              /**clear sample_period_char*/            
+            outString("Passcode: ");
+            input_password[0] = '\0';              /**clear password*/            
         }
         SM_fct();
         while(!t2flag);
@@ -174,6 +187,11 @@ char *syncSM(void){
     clearLCD();
     outString("Entered password: ");
     //password[strlen(password)-1] = '\0'; 
-    outString(password);
-    return password; 
+    outString(input_password);
+    if(input_password == PASSWORD){
+        keypad_auth = 1;
+    }
+    else{
+        keypad_auth = 0;
+    }
 }

@@ -14,14 +14,13 @@
 #include "string.h"
 
 #define BUZZER _LATB2
-#define DETECTION _LATB14
-#define ACTIVE _LATB13
-
+#define DETECTION _LATB13
+#define PASS _LATB1
 
 /*********** GLOBAL VARIABLE AND FUNCTION DEFINITIONS *******/
-uint8_t AUTH = 0;
+volatile uint8_t AUTH = 0;
+//uint8_t DETECTION = 1;
 
-char *PASSWORD = "1001#";
 
 uint8_t centerMessage(uint8_t len){
     uint8_t offset = ((float)(16 - len))/ 2.0;
@@ -29,25 +28,21 @@ uint8_t centerMessage(uint8_t len){
 }
 
 
-void printLCD(char *line1, char *line2){
+void printLCD(char *line1){
        
     uint8_t len1= strlen(line1);
-    uint8_t len2= strlen(line2);
+   
     uint8_t offset1=centerMessage(len1);
-    uint8_t offset2=centerMessage(len2); 
+    
     
     writeLCD(0x80+offset1, 0, 0, 1);
     outStringLCD(line1); //Write string 'Hello there!'
-
-    writeLCD(0xC0+offset2, 0, 0, 1); //Write command to position cursor at 0x40
-    outStringLCD(line2);//Write string 'Enjoy LCD Demo'
 }
 
 enum SM1_STATES { SM1_Reset, SM1_Active, SM1_Alarm, SM1_Override} SM1_STATE;
 
-void Tickfct(void) { 
+void main_Tickfct(void) { 
     char *line1;
-    char *line2;
     
    switch(SM1_STATE) { 
       case SM1_Reset:
@@ -96,51 +91,42 @@ void Tickfct(void) {
       case SM1_Reset:
           BUZZER = 0;
           line1="Initializing";
-          printLCD(line1, "");
+          printLCD(line1);
          break;
       case SM1_Active:
          //DISPLAY: "DISARMED"
           BUZZER = 0;
-          line1="No Detection";
-          line2="No Authorization";
-          printLCD(line1, line2);         
+          line1="D: 0 | A: 0";
+          printLCD(line1);         
          break;
       case SM1_Alarm:
           BUZZER = 1;
-          line1="Detection!";
-          line2="No Authorization";
-          printLCD(line1, line2);         
+          line1="D: 1 | A: 0";
+          printLCD(line1);         
       case SM1_Override:
          BUZZER = 0; //Activate Buzzer
-		 line1="Detection!";
-         line2="Authorized";
-         printLCD(line1, line2);
+		 line1="D: 1 | A: 1";
+         printLCD(line1);
          break;
    }
 }
 
 /********** MAIN PROGRAM ********************************/
 int main(void) {
-    
-    char *enteredPassword; 
-    
     configClock();
     config_keypad();  //Set up RB pins connected to keypad
     configControlLCD(); // configures the RS, RW and E control lines as outputs and initializes them low
     initLCD();// clears the screen
+    initKeypad();
     CONFIG_RA1_AS_DIG_OUTPUT(); //Sets pin 3 to digital output, used for buzzer
-    
+    SM1_STATE = SM1_Reset;
     //outString("Keypad Demo \n \r");
     T2CONbits.TON = 1;  // Turn on timer
 	_T2IE = 1; //Enable Timer 2 interrupts, keypad
     // Local variable for column 
     while(1){
-        enteredPassword = syncSM();
-        if(enteredPassword == PASSWORD){
-            AUTH = 1;
-        }
-        else{
-            AUTH = 0;
-        }
+          main_Tickfct();
+          keypad_syncSM();
+          AUTH = getAuth();   
     }
 }

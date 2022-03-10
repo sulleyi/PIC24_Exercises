@@ -8,5 +8,6 @@
 void config_keypad(void);
 uint8_t get_row(void);
 char print_key(uint8_t row, uint8_t col);
-char *syncSM(void);
-void initSM(void);
+void keypad_syncSM(void);
+void initKeypad(void);
+uint8_t getAuth(void);
