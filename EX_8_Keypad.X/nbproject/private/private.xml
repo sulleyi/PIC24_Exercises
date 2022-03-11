@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group/>
+        <group>
+            <file>file:/home/iansulley/Documents/Union/2021-2022/Winter2022/ECE218/Exercises/keypad_SM.h</file>
+            <file>file:/home/iansulley/Documents/Union/2021-2022/Winter2022/ECE218/Exercises/main_lcd.c</file>
+            <file>file:/home/iansulley/Documents/Union/2021-2022/Winter2022/ECE218/Exercises/main_SM.c</file>
+            <file>file:/home/iansulley/Documents/Union/2021-2022/Winter2022/ECE218/Exercises/lcd4bit_lib.c</file>
+            <file>file:/home/iansulley/Documents/Union/2021-2022/Winter2022/ECE218/Exercises/main_Proj4.c</file>
+            <file>file:/home/iansulley/Documents/Union/2021-2022/Winter2022/ECE218/Exercises/keypad_SM.c</file>
+            <file>file:/home/iansulley/Documents/Union/2021-2022/Winter2022/ECE218/Exercises/pic24_code_examples/lib/include/lcd4bit_lib.h</file>
+        </group>
     </open-files>
 </project-private>

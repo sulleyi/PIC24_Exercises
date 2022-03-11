@@ -13,12 +13,11 @@
 #include "stdio.h"
 #include "string.h"
 
-#define BUZZER _LATB2
-#define DETECTION _LATB10
+#define BUZZER (_LATA1)
+#define DETECTION (_LATB10 == 1)
 
 /*********** GLOBAL VARIABLE AND FUNCTION DEFINITIONS *******/
-volatile uint8_t AUTH = 0;
-//uint8_t DETECTION = 1;
+uint8_t AUTH = 0;
 
 uint8_t centerMessage(uint8_t len){
     uint8_t offset = ((float)(16 - len))/ 2.0;
@@ -31,8 +30,7 @@ void printLCD(char *line1){
     uint8_t len1= strlen(line1);
    
     uint8_t offset1=centerMessage(len1);
-    
-    
+      
     writeLCD(0x80+offset1, 0, 0, 1);
     outStringLCD(line1); //Write string 'Hello there!'
 }
@@ -49,13 +47,10 @@ void main_Tickfct(void) {
          }
          break;
       case SM1_Active:
-         if (DETECTION && !AUTH) {
+         if (DETECTION & !AUTH) {
             SM1_STATE = SM1_Alarm;
          }
-         else if (!DETECTION && !AUTH) {
-            SM1_STATE = SM1_Active;
-         }
-         else if(DETECTION && AUTH){
+         else if((DETECTION || !DETECTION) && AUTH){
             SM1_STATE = SM1_Override;
          }
          break;
@@ -71,10 +66,10 @@ void main_Tickfct(void) {
          }
          break;
       case SM1_Override:
-         if (!DETECTION && AUTH) {
-            SM1_STATE = SM1_Reset;
+         if (!AUTH) {
+            SM1_STATE = SM1_Active;
          }
-         else if (DETECTION && AUTH) {
+         else if (AUTH) {
             SM1_STATE = SM1_Override;
          }
          else {
@@ -87,24 +82,20 @@ void main_Tickfct(void) {
    }
    switch(SM1_STATE) { 
       case SM1_Reset:
-          BUZZER = 0;
-          line1="Initializing";
-          printLCD(line1);
          break;
       case SM1_Active:
-         //DISPLAY: "DISARMED"
           BUZZER = 0;
-          line1="D: 0 | A: 0";
+          line1="  Active  ";
           printLCD(line1);         
          break;
       case SM1_Alarm:
           BUZZER = 1;
-          line1="D: 1 | A: 0";
+          line1="Alarm!";
           printLCD(line1); 
           break;
       case SM1_Override:
-         BUZZER = 0; //Activate Buzzer
-		 line1="D: 1 | A: 1";
+          BUZZER = 0;
+		 line1="Override";
          printLCD(line1);
          break;
    }
@@ -117,8 +108,10 @@ int main(void) {
     configControlLCD(); // configures the RS, RW and E control lines as outputs and initializes them low
     initLCD();// clears the screen
     initKeypad();
-    CONFIG_RA1_AS_DIG_OUTPUT(); //Sets pin 3 to digital output, used for buzzer
+    
+    CONFIG_RA1_AS_OUTPUT();
     CONFIG_RB10_AS_DIG_INPUT();
+    
     SM1_STATE = SM1_Reset;
     //outString("Keypad Demo \n \r");
     T2CONbits.TON = 1;  // Turn on timer

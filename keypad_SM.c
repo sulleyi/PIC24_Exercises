@@ -38,7 +38,9 @@ char *PASSWORD = "1001#";
 
 volatile uint8_t t2flag = 0;  //timer flag to synchronize state machine
 char input_password[5];    /**password character array used to store user input*/
-    // Lookup table for keypad
+    
+
+// Lookup table for keypad
 char keypad_table[4][3] = 
 {
     {'1','2','3'},
@@ -89,7 +91,7 @@ void print_key(uint8_t row, uint8_t col) {
 void reset_pw_capture(void){
     input_password[0] = '\0'; /**initializes password character array used to store user input*/
     writeLCD(0xC0, 0, 0, 1);
-    outStringLCD("PW: ");
+    outStringLCD("PW:                ");
 }
 void updateAuth(void) {
     writeLCD(0xC0, 0, 0, 1);
@@ -113,8 +115,8 @@ void SM_fct(void) {
 *  Outputs: C0, C1, C2
 *  Variables: col, row - col needs to be static because 
 *  it is used as a transition condition*/
-   uint8_t rw; // local row  
-   static uint8_t col;  //static column variable - default initialization is 0 on first call
+    uint8_t rw; // local row  
+    static uint8_t col;  //static column variable - default initialization is 0 on first call
 	switch (state) { //transitions
 	    case S_C0:
 	      if (KP()) {
