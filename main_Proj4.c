@@ -14,7 +14,7 @@
 #include "string.h"
 
 #define BUZZER (_LATA1)
-#define DETECTION (_LATB10 == 1)
+#define DETECTION _RB10
 
 /*********** GLOBAL VARIABLE AND FUNCTION DEFINITIONS *******/
 uint8_t AUTH = 0;
